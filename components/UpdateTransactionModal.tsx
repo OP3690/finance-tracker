@@ -2,15 +2,7 @@
 
 import { useState } from 'react';
 import { Dialog } from '@headlessui/react';
-
-interface Transaction {
-  id: string;
-  category: string;
-  description: string;
-  amount: number;
-  date: string;
-  comment?: string;
-}
+import { Transaction } from '@/types/transaction';
 
 interface UpdateTransactionModalProps {
   transaction: Transaction;
@@ -27,7 +19,7 @@ export default function UpdateTransactionModal({
     category: transaction.category,
     description: transaction.description,
     amount: transaction.amount,
-    date: new Date(transaction.date).toISOString().split('T')[0],
+    date: transaction.date,
     comment: transaction.comment || '',
   });
 
