@@ -33,7 +33,10 @@ export default function TransactionTable({
   };
 
   const handleUpdate = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
+    setSelectedTransaction({
+      ...transaction,
+      date: new Date(transaction.date).toISOString().split('T')[0]
+    });
     setIsUpdateModalOpen(true);
   };
 
