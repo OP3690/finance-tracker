@@ -5,20 +5,12 @@ import { useQuery } from '@tanstack/react-query';
 import { format, subMonths } from 'date-fns';
 import { FaMoneyBillWave, FaPiggyBank, FaChartLine, FaHome, FaCreditCard } from 'react-icons/fa';
 import KeyFigureCard from '@/components/KeyFigureCard';
-import CategoryPieChart from '@/components/CategoryPieChart';
-import DailySpendChart from '@/components/DailySpendChart';
+import { CategoryPieChart } from '@/components/CategoryPieChart';
+import { DailySpendChart } from '@/components/DailySpendChart';
 import { formatCurrency, calculatePercentageChange } from '@/utils/helpers';
 import { Plus } from 'lucide-react';
 import AddTransactionModal from '@/components/AddTransactionModal';
-
-interface Transaction {
-  id: string;
-  date: string;
-  category: string;
-  description: string;
-  amount: number;
-  comment?: string;
-}
+import { Transaction } from '@/types/transaction';
 
 export default function Dashboard() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -34,7 +26,8 @@ export default function Dashboard() {
     queryKey: ['transactions'],
     queryFn: async () => {
       const response = await fetch('/api/transactions');
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 

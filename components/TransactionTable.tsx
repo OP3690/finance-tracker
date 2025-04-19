@@ -49,10 +49,7 @@ export default function TransactionTable({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...updatedTransaction,
-          date: updatedTransaction.date.toISOString(),
-        }),
+        body: JSON.stringify(updatedTransaction),
       });
 
       if (!response.ok) {
@@ -115,7 +112,7 @@ export default function TransactionTable({
             {transactions.map((transaction) => (
               <tr key={transaction.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {transaction.date.toLocaleDateString()}
+                  {new Date(transaction.date).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {transaction.category}

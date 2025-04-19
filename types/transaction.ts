@@ -1,9 +1,9 @@
 export interface Transaction {
   id: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   category: string;
-  date: Date;
+  date: string;
   description: string;
   amount: number;
   comment: string | null;

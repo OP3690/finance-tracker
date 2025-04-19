@@ -3,14 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils/helpers';
-
-interface Transaction {
-  id: string;
-  date: string;
-  category: string;
-  description: string;
-  amount: number;
-}
+import { Transaction } from '@/types/transaction';
 
 interface Budget {
   category: string;
