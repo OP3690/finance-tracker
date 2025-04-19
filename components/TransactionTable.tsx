@@ -22,9 +22,21 @@ export default function TransactionTable({
   onEdit,
 }: TransactionTableProps) {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   const handlePageChange = (page: number) => {
     onPageChange(page);
+  };
+
+  const handleEdit = (transaction: Transaction) => {
+    setSelectedTransaction({
+      ...transaction,
+      date: transaction.date,
+      createdAt: transaction.createdAt,
+      updatedAt: transaction.updatedAt
+    });
+    setIsUpdateModalOpen(true);
   };
 
   return (
@@ -67,7 +79,7 @@ export default function TransactionTable({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <button
-                    onClick={() => onEdit(transaction)}
+                    onClick={() => handleEdit(transaction)}
                     className="text-blue-600 hover:text-blue-900 mr-2"
                   >
                     <Pencil className="h-4 w-4" />
@@ -105,12 +117,13 @@ export default function TransactionTable({
         </button>
       </div>
 
-      {editingTransaction && (
+      {selectedTransaction && (
         <UpdateTransactionModal
-          transaction={editingTransaction}
-          onClose={() => setEditingTransaction(null)}
+          isOpen={isUpdateModalOpen}
+          onClose={() => setIsUpdateModalOpen(false)}
+          transaction={selectedTransaction}
           onUpdate={() => {
-            setEditingTransaction(null);
+            setIsUpdateModalOpen(false);
             // Refresh the transactions list
             onPageChange(currentPage);
           }}

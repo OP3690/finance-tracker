@@ -5,12 +5,14 @@ import { Dialog } from '@headlessui/react';
 import { Transaction } from '@/types/transaction';
 
 interface UpdateTransactionModalProps {
+  isOpen: boolean;
   transaction: Transaction;
   onClose: () => void;
   onUpdate: () => void;
 }
 
 export default function UpdateTransactionModal({
+  isOpen,
   transaction,
   onClose,
   onUpdate,
@@ -46,7 +48,7 @@ export default function UpdateTransactionModal({
 
   return (
     <Dialog
-      open={true}
+      open={isOpen}
       onClose={onClose}
       className="fixed inset-0 z-10 overflow-y-auto"
     >
