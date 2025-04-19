@@ -7,4 +7,5 @@ export interface Transaction {
   description: string;
   amount: number;
   comment: string | null;
+  type: 'income' | 'expense';
 } 
