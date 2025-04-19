@@ -1,6 +1,33 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params;
+    const transaction = await prisma.transaction.findUnique({
+      where: { id },
+    });
+
+    if (!transaction) {
+      return NextResponse.json(
+        { error: 'Transaction not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(transaction);
+  } catch (error) {
+    console.error('Error fetching transaction:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch transaction' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
@@ -9,19 +36,18 @@ export async function PUT(
     const { id } = params;
     const body = await request.json();
 
-    const updatedTransaction = await prisma.transaction.update({
+    const transaction = await prisma.transaction.update({
       where: { id },
       data: {
         date: body.date,
         category: body.category,
         description: body.description,
         amount: body.amount,
-        type: body.type || "expense",
-        comment: body.comment || null,
+        comment: body.comment,
       },
     });
 
-    return NextResponse.json(updatedTransaction);
+    return NextResponse.json(transaction);
   } catch (error) {
     console.error('Error updating transaction:', error);
     return NextResponse.json(
