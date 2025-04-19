@@ -9,7 +9,7 @@ interface CategoryPieChartProps {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
-const CategoryPieChart = ({ transactions }: CategoryPieChartProps) => {
+export function CategoryPieChart({ transactions }: CategoryPieChartProps) {
   if (!transactions.length) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -52,6 +52,4 @@ const CategoryPieChart = ({ transactions }: CategoryPieChartProps) => {
       </ResponsiveContainer>
     </div>
   );
-};
-
-export default CategoryPieChart; 
+} 
