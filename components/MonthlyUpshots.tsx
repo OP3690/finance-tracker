@@ -3,7 +3,15 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
-import { Transaction } from '@/types/transaction';
+
+interface Transaction {
+  id: string;
+  date: string;
+  category: string;
+  description: string;
+  amount: number;
+  comment?: string;
+}
 
 interface MonthlyStats {
   month: string;

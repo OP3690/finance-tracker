@@ -1,9 +1,20 @@
-import { prisma } from '../lib/prisma';
+const { PrismaClient } = require('@prisma/client');
 
-async function cleanDb() {
+const prisma = new PrismaClient();
+
+async function cleanDatabase() {
   try {
+    console.log('Cleaning database...');
+    
+    // Delete all transactions
     await prisma.transaction.deleteMany();
-    console.log('Database cleaned successfully');
+    console.log('Deleted all transactions');
+    
+    // Delete all categories
+    await prisma.category.deleteMany();
+    console.log('Deleted all categories');
+    
+    console.log('Database cleaned successfully!');
   } catch (error) {
     console.error('Error cleaning database:', error);
   } finally {
@@ -11,4 +22,4 @@ async function cleanDb() {
   }
 }
 
-cleanDb(); 
+cleanDatabase(); 

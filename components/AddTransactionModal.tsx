@@ -1,185 +1,259 @@
 'use client';
 
-import { useState } from 'react';
-import { Transaction } from '@/types/transaction';
-import { CATEGORIES_WITH_DESCRIPTIONS } from '@/lib/constants';
+import { useState, useEffect, useRef } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { X, Calendar, ChevronDown, Plus } from 'lucide-react';
+import { format } from 'date-fns';
+
+interface Category {
+  id: string;
+  name: string;
+  descriptions: string[];
+}
 
 interface AddTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
 }
 
-export default function AddTransactionModal({ isOpen, onClose, onAddTransaction }: AddTransactionModalProps) {
-  const [formData, setFormData] = useState<Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>>({
-    date: new Date().toISOString().split('T')[0],
-    category: '',
-    description: '',
-    amount: 0,
-    comment: '',
-    type: 'expense',
-  });
+export default function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProps) {
+  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState('');
+  const [comment, setComment] = useState('');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showDescriptionDropdown, setShowDescriptionDropdown] = useState(false);
 
-  const [error, setError] = useState<string | null>(null);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const descriptionDropdownRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchCategories();
+      // Focus on amount input when modal opens
+      setTimeout(() => {
+        amountInputRef.current?.focus();
+      }, 100);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+        setShowCategoryDropdown(false);
+      }
+      if (descriptionDropdownRef.current && !descriptionDropdownRef.current.contains(event.target as Node)) {
+        setShowDescriptionDropdown(false);
+      }
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [onClose]);
+
+  const mutation = useMutation({
+    mutationFn: async (newTransaction: any) => {
       const response = await fetch('/api/transactions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          amount: Number(formData.amount),
-        }),
+        body: JSON.stringify(newTransaction),
       });
       if (!response.ok) {
         throw new Error('Failed to add transaction');
       }
-      const newTransaction = await response.json();
-      onAddTransaction(newTransaction);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
       onClose();
-    } catch (error) {
-      console.error('Error adding transaction:', error);
-    }
-  };
+    },
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'amount' ? Number(value) || 0 : (value as string),
-    }));
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    mutation.mutate({
+      date,
+      category,
+      description,
+      amount: parseFloat(amount),
+      comment,
+    });
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-4">Add Transaction</h2>
-        
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div ref={modalRef} className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">Add Transaction</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 transition-colors"
+            aria-label="Close"
+          >
+            <X size={24} />
+          </button>
+        </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="type">
-              Type
-            </label>
-            <select
-              id="type"
-              name="type"
-              value={formData.type}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                />
+                <Calendar className="absolute right-3 top-2.5 text-gray-400" size={20} />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+              <div className="relative">
+                <span className="absolute left-3 top-2 text-gray-500">₹</span>
+                <input
+                  ref={amountInputRef}
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  required
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div ref={categoryDropdownRef} className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <button
+              type="button"
+              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-left flex items-center justify-between focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             >
-              <option value="expense">Expense</option>
-              <option value="income">Income</option>
-            </select>
+              <span className={category ? 'text-gray-900' : 'text-gray-500'}>
+                {category || 'Select Category'}
+              </span>
+              <ChevronDown size={20} className="text-gray-400" />
+            </button>
+            {showCategoryDropdown && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => {
+                      setCategory(cat.name);
+                      setDescription('');
+                      setShowCategoryDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="category">
-              Category
-            </label>
-            <select
-              id="category"
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
+          <div ref={descriptionDropdownRef} className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <button
+              type="button"
+              onClick={() => setShowDescriptionDropdown(!showDescriptionDropdown)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-left flex items-center justify-between focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+              disabled={!category}
             >
-              <option value="">Select a category</option>
-              {Object.entries(CATEGORIES_WITH_DESCRIPTIONS).map(([category, descriptions]) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
+              <span className={description ? 'text-gray-900' : 'text-gray-500'}>
+                {description || 'Select Description'}
+              </span>
+              <ChevronDown size={20} className="text-gray-400" />
+            </button>
+            {showDescriptionDropdown && category && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                {categories
+                  .find((cat) => cat.name === category)
+                  ?.descriptions.map((desc) => (
+                    <button
+                      key={desc}
+                      type="button"
+                      onClick={() => {
+                        setDescription(desc);
+                        setShowDescriptionDropdown(false);
+                      }}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                    >
+                      {desc}
+                    </button>
+                  ))}
+              </div>
+            )}
           </div>
 
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="description">
-              Description
-            </label>
-            <input
-              type="text"
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="amount">
-              Amount
-            </label>
-            <input
-              type="number"
-              id="amount"
-              name="amount"
-              value={formData.amount}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-              min="0"
-              step="0.01"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="date">
-              Date
-            </label>
-            <input
-              type="date"
-              id="date"
-              name="date"
-              value={formData.date}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="comment">
-              Comment (Optional)
-            </label>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Comment (Optional)</label>
             <textarea
-              id="comment"
-              name="comment"
-              value={formData.comment}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={3}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors min-h-[80px]"
+              placeholder="Add any additional notes"
             />
           </div>
 
-          <div className="flex justify-end space-x-4">
+          <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={mutation.isPending || !category || !description || !amount}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Add Transaction
+              {mutation.isPending ? 'Adding...' : 'Add Transaction'}
             </button>
           </div>
         </form>

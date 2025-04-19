@@ -8,7 +8,15 @@ import { toast } from 'react-hot-toast';
 import React from 'react';
 import { X, Pencil, Trash2 } from 'lucide-react';
 import UpdateTransactionModal from '@/components/UpdateTransactionModal';
-import { Transaction } from '@/types/transaction';
+
+interface Transaction {
+  id: string;
+  date: string;
+  category: string;
+  description: string;
+  amount: number;
+  comment?: string;
+}
 
 interface Category {
   id: string;
@@ -45,14 +53,20 @@ export default function TransactionsPage() {
     queryKey: ['categories'],
     queryFn: async () => {
       const response = await fetch('/api/categories');
+      if (!response.ok) {
+        throw new Error('Failed to fetch categories');
+      }
       return response.json();
     },
   });
 
-  const { data: transactions = [], isLoading } = useQuery<Transaction[]>({
+  const { data: transactions = [], isLoading, isError } = useQuery<Transaction[]>({
     queryKey: ['transactions'],
     queryFn: async () => {
       const response = await fetch('/api/transactions');
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions');
+      }
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
@@ -71,22 +85,27 @@ export default function TransactionsPage() {
     }));
   }, []);
 
-  const filteredTransactions = Array.isArray(transactions) ? transactions
-    .filter((transaction) => {
-      if (filters.category && transaction.category !== filters.category) return false;
-      if (filters.startDate && new Date(transaction.date) < new Date(filters.startDate)) return false;
-      if (filters.endDate && new Date(transaction.date) > new Date(filters.endDate)) return false;
-      if (filters.minAmount && transaction.amount < parseFloat(filters.minAmount)) return false;
-      if (filters.maxAmount && transaction.amount > parseFloat(filters.maxAmount)) return false;
-      if (
-        filters.searchTerm &&
-        !transaction.description.toLowerCase().includes(filters.searchTerm.toLowerCase()) &&
-        !transaction.category.toLowerCase().includes(filters.searchTerm.toLowerCase())
-      )
-        return false;
-      return true;
-    })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) : [];
+  const filteredTransactions = React.useMemo(() => {
+    if (!Array.isArray(transactions)) return [];
+    
+    return transactions
+      .filter((transaction) => {
+        if (!transaction) return false;
+        if (filters.category && transaction.category !== filters.category) return false;
+        if (filters.startDate && new Date(transaction.date) < new Date(filters.startDate)) return false;
+        if (filters.endDate && new Date(transaction.date) > new Date(filters.endDate)) return false;
+        if (filters.minAmount && transaction.amount < parseFloat(filters.minAmount)) return false;
+        if (filters.maxAmount && transaction.amount > parseFloat(filters.maxAmount)) return false;
+        if (
+          filters.searchTerm &&
+          !transaction.description.toLowerCase().includes(filters.searchTerm.toLowerCase()) &&
+          !transaction.category.toLowerCase().includes(filters.searchTerm.toLowerCase())
+        )
+          return false;
+        return true;
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [transactions, filters]);
 
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
   const paginatedTransactions = filteredTransactions.slice(
@@ -149,8 +168,8 @@ export default function TransactionsPage() {
     }
   };
 
-  const handleUpdate = async (transaction: Transaction) => {
-    setShowUpdateModal(transaction.id);
+  const handleUpdate = async (id: string) => {
+    setShowUpdateModal(id);
   };
 
   const getAmountColor = (category: string, amount: number) => {
@@ -200,27 +219,6 @@ export default function TransactionsPage() {
         onClose={() => {
           setIsAddModalOpen(false);
           setCurrentPage(1);
-        }}
-        onAddTransaction={async (formData) => {
-          try {
-            const response = await fetch('/api/transactions', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(formData),
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to add transaction');
-            }
-
-            await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-            toast.success('Transaction added successfully');
-            setIsAddModalOpen(false);
-            setCurrentPage(1);
-          } catch (error) {
-            console.error('Error adding transaction:', error);
-            toast.error('Failed to add transaction');
-          }
         }}
       />
 
@@ -461,19 +459,19 @@ export default function TransactionsPage() {
                     >
                       {formatCurrency(transaction.amount)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div className="flex space-x-2">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                      <div className="flex items-center justify-center space-x-2">
                         <button
-                          onClick={() => handleUpdate(transaction)}
-                          className="text-blue-600 hover:text-blue-900"
+                          onClick={() => handleUpdate(transaction.id)}
+                          className="text-blue-600 hover:text-blue-800"
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil size={16} />
                         </button>
                         <button
                           onClick={() => setShowDeleteConfirm(transaction)}
-                          className="text-red-600 hover:text-red-900"
+                          className="text-red-600 hover:text-red-800"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>
@@ -543,27 +541,11 @@ export default function TransactionsPage() {
 
       {showUpdateModal && (
         <UpdateTransactionModal
-          isOpen={true}
           transaction={transactions.find(t => t.id === showUpdateModal)!}
           onClose={() => setShowUpdateModal(null)}
-          onUpdate={async (updatedTransaction) => {
-            try {
-              const response = await fetch(`/api/transactions/${updatedTransaction.id}`, {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(updatedTransaction),
-              });
-              
-              if (!response.ok) throw new Error('Failed to update transaction');
-              
-              await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-              toast.success('Transaction updated successfully');
-              setShowUpdateModal(null);
-            } catch (error) {
-              toast.error('Failed to update transaction');
-            }
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['transactions'] });
+            setShowUpdateModal(null);
           }}
         />
       )}

@@ -8,52 +8,35 @@ import KeyFigureCard from '@/components/KeyFigureCard';
 import CategoryPieChart from '@/components/CategoryPieChart';
 import DailySpendChart from '@/components/DailySpendChart';
 import { formatCurrency, calculatePercentageChange } from '@/utils/helpers';
-import { Plus, Trash2, Edit2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import AddTransactionModal from '@/components/AddTransactionModal';
-import UpdateTransactionModal from '@/components/UpdateTransactionModal';
-import { Transaction } from '@/types/transaction';
-import { CATEGORIES_WITH_DESCRIPTIONS } from '@/lib/constants';
+
+interface Transaction {
+  id: string;
+  date: string;
+  category: string;
+  description: string;
+  amount: number;
+  comment?: string;
+}
 
 export default function Dashboard() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [previousMonths, setPreviousMonths] = useState<Date[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const months = Array.from({ length: 3 }, (_, i) => subMonths(currentMonth, i + 1));
     setPreviousMonths(months);
   }, [currentMonth]);
 
-  const { data: transactionsData = [], isLoading: queryLoading } = useQuery<Transaction[]>({
+  const { data: transactions = [], isLoading } = useQuery<Transaction[]>({
     queryKey: ['transactions'],
     queryFn: async () => {
       const response = await fetch('/api/transactions');
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
+      return response.json();
     },
   });
-
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
-
-  const fetchTransactions = async () => {
-    try {
-      const response = await fetch('/api/transactions');
-      const data = await response.json();
-      setTransactions(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-      setTransactions([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const getMonthlyTotal = (month: Date, category?: string) => {
     return transactions
@@ -120,101 +103,17 @@ export default function Dashboard() {
       .reduce((sum, t) => sum + t.amount, 0);
   };
 
-  const handleAddTransaction = async (formData: {
-    category: string;
-    description: string;
-    amount: number;
-    date: string;
-    comment?: string;
-  }) => {
-    try {
-      const response = await fetch('/api/transactions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          amount: Number(formData.amount),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to add transaction');
-      }
-
-      const newTransaction = await response.json();
-      setTransactions([...transactions, newTransaction]);
-      setIsAddModalOpen(false);
-    } catch (error) {
-      console.error('Error adding transaction:', error);
-    }
-  };
-
-  const handleUpdateTransaction = async (formData: {
-    id: string;
-    category: string;
-    description: string;
-    amount: number;
-    date: string;
-    comment?: string;
-  }) => {
-    try {
-      const response = await fetch(`/api/transactions/${formData.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          amount: Number(formData.amount),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update transaction');
-      }
-
-      const updatedTransaction = await response.json();
-      setTransactions(
-        transactions.map((t) =>
-          t.id === updatedTransaction.id ? updatedTransaction : t
-        )
-      );
-      setIsUpdateModalOpen(false);
-      setSelectedTransaction(null);
-    } catch (error) {
-      console.error('Error updating transaction:', error);
-    }
-  };
-
-  const handleDeleteTransaction = async (id: string) => {
-    try {
-      const response = await fetch(`/api/transactions/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete transaction');
-      }
-
-      setTransactions((prev) => prev.filter((t) => t.id !== id));
-    } catch (error) {
-      console.error('Error deleting transaction:', error);
-    }
-  };
-
-  if (queryLoading || isLoading) {
+  if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
   const totalIncome = transactions
-    .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0);
+    ?.filter((t: any) => t.category === 'Income')
+    .reduce((sum: number, t: any) => sum + t.amount, 0) || 0;
 
   const totalExpenses = transactions
-    .filter((t) => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
+    ?.filter((t: any) => t.category !== 'Income')
+    .reduce((sum: number, t: any) => sum + t.amount, 0) || 0;
 
   const balance = totalIncome - totalExpenses;
 
@@ -384,29 +283,14 @@ export default function Dashboard() {
 
         {/* Floating Action Button */}
         <button
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => setIsModalOpen(true)}
           className="fixed bottom-8 right-8 bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-full shadow-lg hover:from-purple-600 hover:to-purple-700 transition-colors"
         >
           <Plus size={24} />
         </button>
 
         {/* Add Transaction Modal */}
-        <AddTransactionModal 
-          isOpen={isAddModalOpen} 
-          onClose={() => setIsAddModalOpen(false)} 
-          onAddTransaction={handleAddTransaction} 
-        />
-
-        {/* Update Transaction Modal */}
-        <UpdateTransactionModal
-          isOpen={isUpdateModalOpen}
-          onClose={() => {
-            setIsUpdateModalOpen(false);
-            setSelectedTransaction(null);
-          }}
-          onUpdate={handleUpdateTransaction}
-          transaction={selectedTransaction}
-        />
+        <AddTransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       </div>
     </div>
   );

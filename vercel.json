@@ -1,8 +1,13 @@
 {
   "version": 2,
-  "framework": "nextjs",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
   "env": {
-    "MONGODB_DB": "finance_tracker",
-    "NEXT_PUBLIC_API_URL": "https://finance-tracker-vercel.vercel.app"
+    "DATABASE_URL": "@database_url",
+    "NEXT_PUBLIC_API_URL": "/api"
   }
 } 

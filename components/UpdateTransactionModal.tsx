@@ -1,52 +1,89 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Transaction } from '@/types/transaction';
-import { CATEGORIES_WITH_DESCRIPTIONS } from '@/lib/constants';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
+import { format } from 'date-fns';
 
-interface UpdateTransactionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onUpdate: (transaction: Transaction) => Promise<void>;
-  transaction: Transaction | null;
+interface Transaction {
+  id: string;
+  date: string;
+  category: string;
+  description: string;
+  amount: number;
+  comment?: string;
 }
 
-const UpdateTransactionModal = ({ isOpen, onClose, onUpdate, transaction }: UpdateTransactionModalProps) => {
-  const [formData, setFormData] = useState<Transaction | null>(null);
+interface Category {
+  id: string;
+  name: string;
+  descriptions: string[];
+}
 
-  useEffect(() => {
-    if (transaction) {
-      setFormData(transaction);
-    }
-  }, [transaction]);
+interface UpdateTransactionModalProps {
+  transaction: Transaction;
+  onClose: () => void;
+  onSuccess: () => void;
+}
 
-  if (!isOpen || !transaction || !formData) return null;
+export default function UpdateTransactionModal({
+  transaction,
+  onClose,
+  onSuccess,
+}: UpdateTransactionModalProps) {
+  const [formData, setFormData] = useState({
+    date: format(new Date(transaction.date), 'yyyy-MM-dd'),
+    category: transaction.category,
+    description: transaction.description,
+    amount: transaction.amount.toString(),
+    comment: transaction.comment || '',
+  });
+
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const response = await fetch('/api/categories');
+      return response.json();
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await onUpdate(formData);
-      onClose();
+      const response = await fetch(`/api/transactions/${transaction.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          amount: parseFloat(formData.amount),
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update transaction');
+
+      toast.success('Transaction updated successfully');
+      onSuccess();
     } catch (error) {
-      console.error('Error updating transaction:', error);
+      toast.error('Failed to update transaction');
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => prev ? {
-      ...prev,
-      [name]: name === 'amount' ? Number(value) || 0 : value,
-    } : null);
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-4">Update Transaction</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="date">
+    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full">
+        <h2 className="text-xl font-semibold mb-4">Update Transaction</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="date" className="block text-sm font-medium text-gray-700">
               Date
             </label>
             <input
@@ -55,13 +92,13 @@ const UpdateTransactionModal = ({ isOpen, onClose, onUpdate, transaction }: Upda
               name="date"
               value={formData.date}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               required
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="category">
+          <div>
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700">
               Category
             </label>
             <select
@@ -69,20 +106,19 @@ const UpdateTransactionModal = ({ isOpen, onClose, onUpdate, transaction }: Upda
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               required
             >
-              <option value="">Select a category</option>
-              {Object.keys(CATEGORIES_WITH_DESCRIPTIONS).map((category) => (
-                <option key={category} value={category}>
-                  {category}
+              {categories.map((category) => (
+                <option key={category.id} value={category.name}>
+                  {category.name}
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="description">
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
               Description
             </label>
             <input
@@ -91,13 +127,13 @@ const UpdateTransactionModal = ({ isOpen, onClose, onUpdate, transaction }: Upda
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               required
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="amount">
+          <div>
+            <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
               Amount
             </label>
             <input
@@ -106,63 +142,43 @@ const UpdateTransactionModal = ({ isOpen, onClose, onUpdate, transaction }: Upda
               name="amount"
               value={formData.amount}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-              min="0"
               step="0.01"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              required
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="type">
-              Type
-            </label>
-            <select
-              id="type"
-              name="type"
-              value={formData.type}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="expense">Expense</option>
-              <option value="income">Income</option>
-            </select>
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="comment">
+          <div>
+            <label htmlFor="comment" className="block text-sm font-medium text-gray-700">
               Comment (Optional)
             </label>
             <textarea
               id="comment"
               name="comment"
-              value={formData.comment || ''}
+              value={formData.comment}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={3}
+              rows={2}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
 
-          <div className="flex justify-end space-x-4">
+          <div className="flex justify-end space-x-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
             >
-              Update Transaction
+              Update
             </button>
           </div>
         </form>
       </div>
     </div>
   );
-};
-
-export default UpdateTransactionModal; 
+} 
