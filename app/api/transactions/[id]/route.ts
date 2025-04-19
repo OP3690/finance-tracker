@@ -1,7 +1,28 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params;
+    const transaction = await prisma.transaction.findUnique({
+      where: { id },
+    });
+
+    if (!transaction) {
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(transaction);
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to fetch transaction' },
+      { status: 500 }
+    );
+  }
+}
 
 export async function PUT(
   request: Request,
@@ -14,7 +35,7 @@ export async function PUT(
     const updatedTransaction = await prisma.transaction.update({
       where: { id },
       data: {
-        date: new Date(body.date),
+        date: body.date,
         category: body.category,
         description: body.description,
         amount: body.amount,
@@ -24,7 +45,6 @@ export async function PUT(
 
     return NextResponse.json(updatedTransaction);
   } catch (error) {
-    console.error('Error updating transaction:', error);
     return NextResponse.json(
       { error: 'Failed to update transaction' },
       { status: 500 }
@@ -44,7 +64,6 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Transaction deleted successfully' });
   } catch (error) {
-    console.error('Error deleting transaction:', error);
     return NextResponse.json(
       { error: 'Failed to delete transaction' },
       { status: 500 }
