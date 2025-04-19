@@ -9,7 +9,7 @@
     "lint": "next lint",
     "import": "ts-node scripts/import-transactions.ts",
     "import-categories": "ts-node scripts/import-categories.ts",
-    "seed": "ts-node prisma/seed.ts",
+    "seed": "ts-node --project tsconfig.seed.json prisma/seed.ts",
     "deploy": "./scripts/deploy.sh"
   },
   "dependencies": {
