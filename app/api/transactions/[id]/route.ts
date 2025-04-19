@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function PUT(
   request: Request,
@@ -18,6 +16,7 @@ export async function PUT(
         category: body.category,
         description: body.description,
         amount: body.amount,
+        type: body.type || "expense",
         comment: body.comment,
       },
     });
