@@ -7,7 +7,7 @@ import AddTransactionModal from '@/components/AddTransactionModal';
 import { toast } from 'react-hot-toast';
 import React from 'react';
 import { X, Pencil, Trash2 } from 'lucide-react';
-import { UpdateTransactionModal } from '@/components/UpdateTransactionModal';
+import UpdateTransactionModal from '@/components/UpdateTransactionModal';
 import { Transaction } from '@/types/transaction';
 
 interface Category {
