@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
 
 export async function GET(request: Request) {
   try {
@@ -9,11 +8,10 @@ export async function GET(request: Request) {
     
     let where = {};
     if (month) {
-      const date = new Date(month);
       where = {
         date: {
-          gte: startOfMonth(date),
-          lte: endOfMonth(date),
+          gte: month + '-01',
+          lte: month + '-31',
         },
       };
     }
