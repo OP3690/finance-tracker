@@ -16,50 +16,38 @@ const CategoryPieChart = ({ transactions }: CategoryPieChartProps) => {
     );
   }
 
-  // Calculate category totals
   const categoryTotals = transactions.reduce((acc, transaction) => {
-    const amount = Math.abs(transaction.amount);
+    const amount = Math.abs(parseFloat(transaction.amount));
     acc[transaction.category] = (acc[transaction.category] || 0) + amount;
     return acc;
   }, {} as Record<string, number>);
 
-  // Convert to array and sort by amount
-  const data = Object.entries(categoryTotals)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value);
-
-  // Calculate total for percentage
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-
-  // Add percentage to each item
-  const dataWithPercentage = data.map(item => ({
-    ...item,
-    percentage: ((item.value / total) * 100).toFixed(1)
+  const data = Object.entries(categoryTotals).map(([name, value]) => ({
+    name,
+    value: parseFloat(value.toFixed(2)),
   }));
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
   return (
     <div className="w-full h-64">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
-            data={dataWithPercentage}
+            data={data}
             cx="50%"
             cy="50%"
             labelLine={false}
-            label={({ name, percentage }) => `${name} (${percentage}%)`}
+            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
             outerRadius={80}
             fill="#8884d8"
             dataKey="value"
           >
-            {dataWithPercentage.map((entry, index) => (
+            {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip
-            formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Amount']}
-          />
+          <Tooltip />
           <Legend />
         </PieChart>
       </ResponsiveContainer>

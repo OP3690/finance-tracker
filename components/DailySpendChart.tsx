@@ -7,7 +7,7 @@ interface DailySpendChartProps {
   transactions: Transaction[];
 }
 
-export function DailySpendChart({ transactions }: DailySpendChartProps) {
+const DailySpendChart = ({ transactions }: DailySpendChartProps) => {
   if (transactions.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
@@ -19,7 +19,7 @@ export function DailySpendChart({ transactions }: DailySpendChartProps) {
   // Group transactions by date and calculate daily totals
   const dailyTotals = transactions.reduce((acc, transaction) => {
     const date = transaction.date.split('T')[0]; // Get just the date part
-    const amount = Math.abs(transaction.amount);
+    const amount = Math.abs(parseFloat(transaction.amount));
     acc[date] = (acc[date] || 0) + amount;
     return acc;
   }, {} as Record<string, number>);
@@ -28,7 +28,7 @@ export function DailySpendChart({ transactions }: DailySpendChartProps) {
   const data = Object.entries(dailyTotals)
     .map(([date, amount]) => ({
       date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      amount
+      amount: parseFloat(amount.toFixed(2)),
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -54,4 +54,6 @@ export function DailySpendChart({ transactions }: DailySpendChartProps) {
       </ResponsiveContainer>
     </div>
   );
-} 
+};
+
+export default DailySpendChart; 

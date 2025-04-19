@@ -12,7 +12,7 @@ export async function PUT(
     const updatedTransaction = await prisma.transaction.update({
       where: { id },
       data: {
-        date: body.date as string,
+        date: body.date,
         category: body.category,
         description: body.description,
         amount: parseFloat(body.amount),
