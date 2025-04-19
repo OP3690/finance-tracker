@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       date: body.date,
       category: body.category,
       description: body.description,
-      amount: body.amount,
+      amount: Number(body.amount),
       type: body.type || "expense",
       comment: body.comment || null,
     };
@@ -48,7 +48,7 @@ export async function PUT(request: Request) {
       date: String(body.date),
       category: String(body.category),
       description: String(body.description),
-      amount: parseFloat(body.amount),
+      amount: Number(body.amount),
       type: body.type || "expense",
       comment: body.comment ? String(body.comment) : null,
     };

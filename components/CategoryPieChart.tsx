@@ -17,7 +17,7 @@ const CategoryPieChart = ({ transactions }: CategoryPieChartProps) => {
   }
 
   const categoryTotals = transactions.reduce((acc, transaction) => {
-    const amount = Math.abs(parseFloat(transaction.amount));
+    const amount = Math.abs(Number(transaction.amount));
     acc[transaction.category] = (acc[transaction.category] || 0) + amount;
     return acc;
   }, {} as Record<string, number>);

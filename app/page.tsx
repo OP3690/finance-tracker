@@ -5,8 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { format, subMonths } from 'date-fns';
 import { FaMoneyBillWave, FaPiggyBank, FaChartLine, FaHome, FaCreditCard } from 'react-icons/fa';
 import KeyFigureCard from '@/components/KeyFigureCard';
-import { CategoryPieChart } from '@/components/CategoryPieChart';
-import { DailySpendChart } from '@/components/DailySpendChart';
+import CategoryPieChart from '@/components/CategoryPieChart';
+import DailySpendChart from '@/components/DailySpendChart';
 import { formatCurrency, calculatePercentageChange } from '@/utils/helpers';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
 import AddTransactionModal from '@/components/AddTransactionModal';
@@ -120,44 +120,69 @@ export default function Dashboard() {
       .reduce((sum, t) => sum + t.amount, 0);
   };
 
-  const handleAddTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+  const handleAddTransaction = async (formData: {
+    category: string;
+    description: string;
+    amount: number;
+    date: string;
+    comment?: string;
+  }) => {
     try {
       const response = await fetch('/api/transactions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(transaction),
+        body: JSON.stringify({
+          ...formData,
+          amount: Number(formData.amount),
+        }),
       });
 
-      if (response.ok) {
-        const newTransaction = await response.json();
-        setTransactions((prev) => [...prev, newTransaction]);
-        setIsAddModalOpen(false);
+      if (!response.ok) {
+        throw new Error('Failed to add transaction');
       }
+
+      const newTransaction = await response.json();
+      setTransactions([...transactions, newTransaction]);
+      setIsAddModalOpen(false);
     } catch (error) {
       console.error('Error adding transaction:', error);
     }
   };
 
-  const handleUpdateTransaction = async (transaction: Transaction) => {
+  const handleUpdateTransaction = async (formData: {
+    id: string;
+    category: string;
+    description: string;
+    amount: number;
+    date: string;
+    comment?: string;
+  }) => {
     try {
-      const response = await fetch(`/api/transactions/${transaction.id}`, {
+      const response = await fetch(`/api/transactions/${formData.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(transaction),
+        body: JSON.stringify({
+          ...formData,
+          amount: Number(formData.amount),
+        }),
       });
 
-      if (response.ok) {
-        const updatedTransaction = await response.json();
-        setTransactions((prev) =>
-          prev.map((t) => (t.id === updatedTransaction.id ? updatedTransaction : t))
-        );
-        setIsUpdateModalOpen(false);
-        setSelectedTransaction(null);
+      if (!response.ok) {
+        throw new Error('Failed to update transaction');
       }
+
+      const updatedTransaction = await response.json();
+      setTransactions(
+        transactions.map((t) =>
+          t.id === updatedTransaction.id ? updatedTransaction : t
+        )
+      );
+      setIsUpdateModalOpen(false);
+      setSelectedTransaction(null);
     } catch (error) {
       console.error('Error updating transaction:', error);
     }
@@ -169,9 +194,11 @@ export default function Dashboard() {
         method: 'DELETE',
       });
 
-      if (response.ok) {
-        setTransactions((prev) => prev.filter((t) => t.id !== id));
+      if (!response.ok) {
+        throw new Error('Failed to delete transaction');
       }
+
+      setTransactions((prev) => prev.filter((t) => t.id !== id));
     } catch (error) {
       console.error('Error deleting transaction:', error);
     }
@@ -364,7 +391,11 @@ export default function Dashboard() {
         </button>
 
         {/* Add Transaction Modal */}
-        <AddTransactionModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onAdd={handleAddTransaction} />
+        <AddTransactionModal 
+          isOpen={isAddModalOpen} 
+          onClose={() => setIsAddModalOpen(false)} 
+          onAddTransaction={handleAddTransaction} 
+        />
 
         {/* Update Transaction Modal */}
         <UpdateTransactionModal
