@@ -20,12 +20,12 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const data = {
-      date: String(body.date),
-      category: String(body.category),
-      description: String(body.description),
-      amount: parseFloat(body.amount),
+      date: body.date,
+      category: body.category,
+      description: body.description,
+      amount: body.amount,
       type: body.type || "expense",
-      comment: body.comment ? String(body.comment) : null,
+      comment: body.comment || null,
     };
 
     const transaction = await prisma.transaction.create({
