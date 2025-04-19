@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Transaction } from '@/types/transaction';
 
 export async function GET(
   request: Request,
@@ -36,19 +37,19 @@ export async function PUT(
     const { id } = params;
     const body = await request.json();
 
-    const transaction = await prisma.transaction.update({
+    const updatedTransaction = await prisma.transaction.update({
       where: { id },
       data: {
-        date: String(body.date),
-        category: String(body.category),
-        description: String(body.description),
-        amount: Number(body.amount),
-        comment: body.comment ? String(body.comment) : null,
-        type: body.type || 'expense'
+        date: body.date,
+        category: body.category,
+        description: body.description,
+        amount: body.amount,
+        type: body.type || 'expense',
+        comment: body.comment || null,
       },
     });
 
-    return NextResponse.json(transaction);
+    return NextResponse.json(updatedTransaction);
   } catch (error) {
     console.error('Error updating transaction:', error);
     return NextResponse.json(
