@@ -9,7 +9,6 @@ export async function PUT(
     const { id } = params;
     const body = await request.json();
 
-    // Handle date as string
     const updatedTransaction = await prisma.transaction.update({
       where: { id },
       data: {

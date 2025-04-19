@@ -1,52 +1,41 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const month = searchParams.get('month');
-    
-    let where = {};
-    if (month) {
-      where = {
-        date: {
-          gte: month + '-01',
-          lte: month + '-31',
-        },
-      };
-    }
-
     const transactions = await prisma.transaction.findMany({
-      where,
-      orderBy: {
-        date: 'desc',
-      },
+      orderBy: { date: 'desc' },
     });
-
     return NextResponse.json(transactions);
   } catch (error) {
-    console.error('Failed to fetch transactions:', error);
-    return NextResponse.json({ error: 'Failed to fetch transactions' }, { status: 500 });
+    console.error('Error fetching transactions:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch transactions' },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const data = await request.json();
+    const body = await request.json();
     const transaction = await prisma.transaction.create({
       data: {
-        date: data.date,
-        category: data.category,
-        description: data.description,
-        amount: data.amount,
-        type: data.type || "expense",
-        comment: data.comment,
+        date: body.date,
+        category: body.category,
+        description: body.description,
+        amount: parseFloat(body.amount),
+        type: body.type || "expense",
+        comment: body.comment,
       },
     });
     return NextResponse.json(transaction);
   } catch (error) {
-    console.error('Failed to create transaction:', error);
-    return NextResponse.json({ error: 'Failed to create transaction' }, { status: 500 });
+    console.error('Error creating transaction:', error);
+    return NextResponse.json(
+      { error: 'Failed to create transaction' },
+      { status: 500 }
+    );
   }
 }
 
