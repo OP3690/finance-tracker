@@ -1,12 +1,12 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
   "env": {
-    "MONGODB_DB": "finance_tracker"
+    "MONGODB_URI": "@mongodb_uri",
+    "MONGODB_DB": "finance_tracker",
+    "NEXT_PUBLIC_API_URL": "https://finance-tracker-vercel.vercel.app"
   }
 } 
