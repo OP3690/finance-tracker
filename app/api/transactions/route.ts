@@ -37,14 +37,14 @@ export async function POST(request: Request) {
     const data = await request.json();
     const transaction = await prisma.transaction.create({
       data: {
-        date: new Date(data.date),
+        date: data.date,
         category: data.category,
         description: data.description,
-        amount: parseFloat(data.amount),
-        comment: data.comment || '',
+        amount: data.amount,
+        type: data.type || "expense",
+        comment: data.comment,
       },
     });
-
     return NextResponse.json(transaction);
   } catch (error) {
     console.error('Failed to create transaction:', error);
@@ -58,14 +58,14 @@ export async function PUT(request: Request) {
     const transaction = await prisma.transaction.update({
       where: { id: data.id },
       data: {
-        date: new Date(data.date),
+        date: data.date,
         category: data.category,
         description: data.description,
-        amount: parseFloat(data.amount),
-        comment: data.comment || '',
+        amount: data.amount,
+        type: data.type || "expense",
+        comment: data.comment,
       },
     });
-
     return NextResponse.json(transaction);
   } catch (error) {
     console.error('Failed to update transaction:', error);

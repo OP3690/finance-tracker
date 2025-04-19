@@ -14,7 +14,7 @@ export async function PUT(
     const updatedTransaction = await prisma.transaction.update({
       where: { id },
       data: {
-        date: new Date(body.date),
+        date: body.date,
         category: body.category,
         description: body.description,
         amount: body.amount,
@@ -42,7 +42,7 @@ export async function DELETE(
       where: { id },
     });
 
-    return NextResponse.json({ message: 'Transaction deleted successfully' });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting transaction:', error);
     return NextResponse.json(
