@@ -19,15 +19,17 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const data = {
+      date: String(body.date),
+      category: String(body.category),
+      description: String(body.description),
+      amount: parseFloat(body.amount),
+      type: body.type || "expense",
+      comment: body.comment ? String(body.comment) : null,
+    };
+
     const transaction = await prisma.transaction.create({
-      data: {
-        date: body.date,
-        category: body.category,
-        description: body.description,
-        amount: parseFloat(body.amount),
-        type: body.type || "expense",
-        comment: body.comment,
-      },
+      data,
     });
     return NextResponse.json(transaction);
   } catch (error) {
@@ -41,22 +43,27 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const data = await request.json();
+    const body = await request.json();
+    const data = {
+      date: String(body.date),
+      category: String(body.category),
+      description: String(body.description),
+      amount: parseFloat(body.amount),
+      type: body.type || "expense",
+      comment: body.comment ? String(body.comment) : null,
+    };
+
     const transaction = await prisma.transaction.update({
-      where: { id: data.id },
-      data: {
-        date: data.date,
-        category: data.category,
-        description: data.description,
-        amount: data.amount,
-        type: data.type || "expense",
-        comment: data.comment,
-      },
+      where: { id: body.id },
+      data,
     });
     return NextResponse.json(transaction);
   } catch (error) {
-    console.error('Failed to update transaction:', error);
-    return NextResponse.json({ error: 'Failed to update transaction' }, { status: 500 });
+    console.error('Error updating transaction:', error);
+    return NextResponse.json(
+      { error: 'Failed to update transaction' },
+      { status: 500 }
+    );
   }
 }
 
@@ -75,7 +82,10 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Failed to delete transaction:', error);
-    return NextResponse.json({ error: 'Failed to delete transaction' }, { status: 500 });
+    console.error('Error deleting transaction:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete transaction' },
+      { status: 500 }
+    );
   }
 } 
