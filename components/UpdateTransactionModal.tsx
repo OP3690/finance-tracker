@@ -19,7 +19,7 @@ export function UpdateTransactionModal({
 }: UpdateTransactionModalProps) {
   const [formData, setFormData] = useState<Transaction>({
     ...transaction,
-    date: new Date(transaction.date).toISOString().split('T')[0],
+    date: transaction.date,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -76,8 +76,8 @@ export function UpdateTransactionModal({
             </label>
             <input
               type="date"
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              value={formData.date.toISOString().split('T')[0]}
+              onChange={(e) => setFormData({ ...formData, date: new Date(e.target.value) })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
               required
             />

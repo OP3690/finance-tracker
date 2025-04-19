@@ -4,14 +4,16 @@ import React, { useState } from 'react';
 import { Transaction } from '@/types/transaction';
 import { formatCurrency, formatDate } from '@/utils/helpers';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit2, Pencil, Trash2 } from 'lucide-react';
-import UpdateTransactionModal from './UpdateTransactionModal';
+import { UpdateTransactionModal } from './UpdateTransactionModal';
+import { DeleteTransactionModal } from './DeleteTransactionModal';
 
 interface TransactionTableProps {
   transactions: Transaction[];
   onPageChange: (page: number) => void;
   currentPage: number;
   totalPages: number;
-  onEdit: (transaction: Transaction) => void;
+  onUpdate: (updatedTransaction: Transaction) => void;
+  onDelete: (transactionId: string) => void;
 }
 
 export default function TransactionTable({
@@ -19,24 +21,68 @@ export default function TransactionTable({
   onPageChange,
   currentPage,
   totalPages,
-  onEdit,
+  onUpdate,
+  onDelete,
 }: TransactionTableProps) {
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   const handlePageChange = (page: number) => {
     onPageChange(page);
   };
 
-  const handleEdit = (transaction: Transaction) => {
-    setSelectedTransaction({
-      ...transaction,
-      date: transaction.date,
-      createdAt: transaction.createdAt,
-      updatedAt: transaction.updatedAt
-    });
+  const handleUpdate = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
     setIsUpdateModalOpen(true);
+  };
+
+  const handleDelete = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleUpdateSubmit = async (updatedTransaction: Transaction) => {
+    try {
+      const response = await fetch('/api/transactions', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...updatedTransaction,
+          date: updatedTransaction.date.toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update transaction');
+      }
+
+      onUpdate(updatedTransaction);
+      setIsUpdateModalOpen(false);
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+    }
+  };
+
+  const handleDeleteSubmit = async () => {
+    if (!selectedTransaction) return;
+
+    try {
+      const response = await fetch(`/api/transactions?id=${selectedTransaction.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete transaction');
+      }
+
+      onDelete(selectedTransaction.id);
+      setIsDeleteModalOpen(false);
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+    }
   };
 
   return (
@@ -58,15 +104,18 @@ export default function TransactionTable({
                 Amount
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Comment
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {transactions.map((transaction) => (
-              <tr key={transaction.id}>
+              <tr key={transaction.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatDate(transaction.date)}
+                  {transaction.date.toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {transaction.category}
@@ -75,21 +124,26 @@ export default function TransactionTable({
                   {transaction.description}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatCurrency(transaction.amount)}
+                  {transaction.amount.toFixed(2)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <button
-                    onClick={() => handleEdit(transaction)}
-                    className="text-blue-600 hover:text-blue-900 mr-2"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => setEditingTransaction(transaction)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  {transaction.comment || '-'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleUpdate(transaction)}
+                      className="text-blue-600 hover:text-blue-900"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(transaction)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -122,11 +176,16 @@ export default function TransactionTable({
           isOpen={isUpdateModalOpen}
           onClose={() => setIsUpdateModalOpen(false)}
           transaction={selectedTransaction}
-          onUpdate={() => {
-            setIsUpdateModalOpen(false);
-            // Refresh the transactions list
-            onPageChange(currentPage);
-          }}
+          onUpdate={handleUpdateSubmit}
+        />
+      )}
+
+      {selectedTransaction && (
+        <DeleteTransactionModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          transaction={selectedTransaction}
+          onDelete={handleDeleteSubmit}
         />
       )}
     </div>
