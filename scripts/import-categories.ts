@@ -1,97 +1,80 @@
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma';
 
 const categories = [
   {
-    name: 'Groceries',
-    descriptions: [
-      'Eggs', 'Chicken', 'Meat', 'Dry Fruits', 'Khari', 'Cold Drinks', 'Wheat (Gehu)',
-      'Fish', 'Vegetables', 'Fruits', 'Oil', 'Rice', 'Aata (Flour)', 'Dal (Lentils)',
-      'Masala (Spices)', 'Milk', 'Soap', 'Snacks', 'Sugar', 'Salt', 'Tea', 'Coffee', 'Other'
-    ]
+    name: 'Food & Dining',
+    descriptions: ['Restaurants', 'Groceries', 'Fast Food', 'Coffee Shops'],
   },
   {
     name: 'Transportation',
-    descriptions: [
-      'Taxi', 'Train Fare', 'Fuel (Petrol/Diesel)', 'Car Maintenance',
-      'Bike Maintenance', 'Airfare', 'Car Rental', 'Other'
-    ]
+    descriptions: ['Gas', 'Public Transit', 'Car Maintenance', 'Parking'],
   },
   {
-    name: 'Recharge/Bill/EMI Payment',
-    descriptions: [
-      'Electricity', 'Wifi-Internet', 'Mobile Recharge', 'Gas Bill',
-      'Loan Payment', 'Subscription - Netflix', 'Subscription - YouTube',
-      'Subscription - LinkedIn', 'Subscription - Hotstar',
-      'Subscription - AppleTV', 'Subscription - Other'
-    ]
+    name: 'Shopping',
+    descriptions: ['Clothing', 'Electronics', 'Home Goods', 'Books'],
   },
   {
-    name: 'Healthcare',
-    descriptions: [
-      'Medicine', 'Doctor Visit', 'Hospital Bill', 'Therapy',
-      'Vitamins/Supplements', 'Medical Equipment', 'Lab Tests',
-      'Prescription Drugs', 'Vision Care (e.g., Glasses)', 'Other'
-    ]
+    name: 'Entertainment',
+    descriptions: ['Movies', 'Games', 'Music', 'Hobbies'],
+  },
+  {
+    name: 'Health',
+    descriptions: ['Doctor', 'Pharmacy', 'Gym', 'Health Insurance'],
+  },
+  {
+    name: 'Housing',
+    descriptions: ['Rent', 'Utilities', 'Home Insurance', 'Maintenance'],
+  },
+  {
+    name: 'Personal Care',
+    descriptions: ['Hair Care', 'Cosmetics', 'Spa & Massage'],
+  },
+  {
+    name: 'Education',
+    descriptions: ['Tuition', 'Books', 'Courses', 'School Supplies'],
+  },
+  {
+    name: 'Gifts & Donations',
+    descriptions: ['Charity', 'Presents', 'Donations'],
+  },
+  {
+    name: 'Travel',
+    descriptions: ['Flights', 'Hotels', 'Vacation', 'Travel Insurance'],
+  },
+  {
+    name: 'Business',
+    descriptions: ['Office Supplies', 'Software', 'Professional Services'],
   },
   {
     name: 'Insurance',
-    descriptions: [
-      'Health Insurance', 'Car Insurance', 'Home Insurance',
-      'Life Insurance', 'Other'
-    ]
+    descriptions: ['Life Insurance', 'Car Insurance', 'Property Insurance'],
   },
   {
-    name: 'Cloths',
-    descriptions: ['Shirts', 'Pants', 'Dresses', 'Other']
+    name: 'Taxes',
+    descriptions: ['Income Tax', 'Property Tax', 'Sales Tax'],
   },
   {
-    name: 'Education - Books',
-    descriptions: [
-      'Books', 'E-Books', 'Journals', 'Magazines', 'Study Guides',
-      'Stationery', 'Other'
-    ]
+    name: 'Investments',
+    descriptions: ['Stocks', 'Bonds', 'Mutual Funds', 'Retirement'],
   },
   {
-    name: 'Investment',
-    descriptions: [
-      'Mutual Fund', 'Stocks', 'Bond Purchase', 'Real Estate',
-      'Cryptocurrency', 'PPF', 'NPS', 'Fixed Deposit', 'Gold/Silver',
-      'Business', 'Other'
-    ]
+    name: 'Debt',
+    descriptions: ['Credit Card', 'Student Loans', 'Personal Loans'],
   },
-  {
-    name: 'Income',
-    descriptions: [
-      'Saving A/c.', 'Salary', 'Bonus', 'Commission', 'Dividend',
-      'Interest', 'Gift', 'Refund', 'Other'
-    ]
-  },
-  {
-    name: 'Other Expenses',
-    descriptions: [
-      'Repair - Electronics', 'Plumber', 'Hobbies', 'Travel',
-      'Taxes', 'Miscellaneous', 'Other'
-    ]
-  }
 ];
 
 async function importCategories() {
   try {
-    console.log('Start importing categories...');
-
-    // Delete all existing categories
-    await prisma.category.deleteMany();
-
-    // Insert all categories
+    console.log('Importing categories...');
+    
     for (const category of categories) {
       await prisma.category.create({
-        data: category
+        data: category,
       });
+      console.log(`Created category: ${category.name}`);
     }
-
-    console.log('Successfully imported categories!');
+    
+    console.log('Categories imported successfully!');
   } catch (error) {
     console.error('Error importing categories:', error);
   } finally {

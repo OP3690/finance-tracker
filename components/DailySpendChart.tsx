@@ -19,7 +19,7 @@ const DailySpendChart = ({ transactions }: DailySpendChartProps) => {
   // Group transactions by date and calculate daily totals
   const dailyTotals = transactions.reduce((acc, transaction) => {
     const date = transaction.date.split('T')[0]; // Get just the date part
-    const amount = Math.abs(parseFloat(transaction.amount));
+    const amount = Math.abs(transaction.amount);
     acc[date] = (acc[date] || 0) + amount;
     return acc;
   }, {} as Record<string, number>);

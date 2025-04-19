@@ -4,6 +4,7 @@ export interface Transaction {
   category: string;
   description: string;
   amount: number;
+  type: 'income' | 'expense';
   comment?: string;
   createdAt: string;
   updatedAt: string;

@@ -44,6 +44,7 @@ export async function PUT(
         description: String(body.description),
         amount: Number(body.amount),
         comment: body.comment ? String(body.comment) : null,
+        type: body.type || 'expense'
       },
     });
 
@@ -67,7 +68,7 @@ export async function DELETE(
       where: { id },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ message: 'Transaction deleted successfully' });
   } catch (error) {
     console.error('Error deleting transaction:', error);
     return NextResponse.json(

@@ -201,6 +201,27 @@ export default function TransactionsPage() {
           setIsAddModalOpen(false);
           setCurrentPage(1);
         }}
+        onAddTransaction={async (formData) => {
+          try {
+            const response = await fetch('/api/transactions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(formData),
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to add transaction');
+            }
+
+            await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+            toast.success('Transaction added successfully');
+            setIsAddModalOpen(false);
+            setCurrentPage(1);
+          } catch (error) {
+            console.error('Error adding transaction:', error);
+            toast.error('Failed to add transaction');
+          }
+        }}
       />
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mt-8">

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Transaction } from '@/types/transaction';
 import { formatCurrency, formatDate } from '@/utils/helpers';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit2, Pencil, Trash2 } from 'lucide-react';
-import { UpdateTransactionModal } from './UpdateTransactionModal';
+import UpdateTransactionModal from './UpdateTransactionModal';
 import { DeleteTransactionModal } from './DeleteTransactionModal';
 
 interface TransactionTableProps {
