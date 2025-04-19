@@ -39,11 +39,11 @@ export async function PUT(
     const transaction = await prisma.transaction.update({
       where: { id },
       data: {
-        date: body.date,
-        category: body.category,
-        description: body.description,
-        amount: body.amount,
-        comment: body.comment,
+        date: String(body.date),
+        category: String(body.category),
+        description: String(body.description),
+        amount: Number(body.amount),
+        comment: body.comment ? String(body.comment) : null,
       },
     });
 
