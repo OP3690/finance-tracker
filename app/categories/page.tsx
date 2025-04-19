@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';

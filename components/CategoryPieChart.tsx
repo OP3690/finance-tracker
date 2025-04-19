@@ -6,7 +6,7 @@ import { formatCurrency } from '@/utils/helpers';
 
 interface Transaction {
   id: string;
-  date: Date;
+  date: string;
   category: string;
   description: string;
   amount: number;
