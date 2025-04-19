@@ -6,7 +6,7 @@ import { formatCurrency } from '@/utils/helpers';
 
 interface Transaction {
   id: string;
-  date: Date;
+  date: string;
   category: string;
   description: string;
   amount: number;
@@ -17,7 +17,7 @@ interface CategoryPieChartProps {
   transactions: Transaction[];
 }
 
-export default function CategoryPieChart({ transactions }: CategoryPieChartProps) {
+const CategoryPieChart = ({ transactions }: CategoryPieChartProps) => {
   if (!transactions || transactions.length === 0) {
     return <div className="text-center p-4">No transactions to display</div>;
   }
@@ -100,4 +100,6 @@ export default function CategoryPieChart({ transactions }: CategoryPieChartProps
       </ResponsiveContainer>
     </div>
   );
-} 
+};
+
+export default CategoryPieChart; 

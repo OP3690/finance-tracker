@@ -6,7 +6,7 @@ import { formatCurrency } from '@/utils/helpers';
 
 interface Transaction {
   id: string;
-  date: Date;
+  date: string;
   category: string;
   description: string;
   amount: number;
@@ -36,7 +36,7 @@ const formatYAxisValue = (value: number) => {
   return value.toString();
 };
 
-export default function DailySpendChart({ transactions }: DailySpendChartProps) {
+const DailySpendChart = ({ transactions }: DailySpendChartProps) => {
   if (!transactions || transactions.length === 0) {
     return <div className="text-center p-4">No transactions to display</div>;
   }
@@ -87,4 +87,6 @@ export default function DailySpendChart({ transactions }: DailySpendChartProps) 
       </ResponsiveContainer>
     </div>
   );
-} 
+};
+
+export default DailySpendChart; 
