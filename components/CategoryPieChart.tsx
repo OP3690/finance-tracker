@@ -17,7 +17,7 @@ interface CategoryPieChartProps {
   transactions: Transaction[];
 }
 
-const CategoryPieChart = ({ transactions }: CategoryPieChartProps) => {
+function CategoryPieChart({ transactions }: CategoryPieChartProps) {
   if (!transactions || transactions.length === 0) {
     return <div className="text-center p-4">No transactions to display</div>;
   }
@@ -100,6 +100,6 @@ const CategoryPieChart = ({ transactions }: CategoryPieChartProps) => {
       </ResponsiveContainer>
     </div>
   );
-};
+}
 
 export default CategoryPieChart; 
