@@ -36,7 +36,7 @@ const formatYAxisValue = (value: number) => {
   return value.toString();
 };
 
-const DailySpendChart = ({ transactions }: DailySpendChartProps) => {
+export default function DailySpendChart({ transactions }: DailySpendChartProps) {
   if (!transactions || transactions.length === 0) {
     return <div className="text-center p-4">No transactions to display</div>;
   }
@@ -87,6 +87,4 @@ const DailySpendChart = ({ transactions }: DailySpendChartProps) => {
       </ResponsiveContainer>
     </div>
   );
-};
-
-export default DailySpendChart; 
+} 
