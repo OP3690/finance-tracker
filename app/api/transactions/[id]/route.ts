@@ -9,16 +9,14 @@ export async function PUT(
     const { id } = params;
     const body = await request.json();
 
-    // Ensure date is handled as a string
-    const date = typeof body.date === 'string' ? body.date : body.date.toISOString().split('T')[0];
-
+    // Handle date as string
     const updatedTransaction = await prisma.transaction.update({
       where: { id },
       data: {
-        date,
+        date: body.date,
         category: body.category,
         description: body.description,
-        amount: body.amount,
+        amount: parseFloat(body.amount),
         type: body.type || "expense",
         comment: body.comment,
       },
