@@ -37,16 +37,18 @@ export async function PUT(
     const { id } = params;
     const body = await request.json();
 
+    const data = {
+      date: String(body.date),
+      category: String(body.category),
+      description: String(body.description),
+      amount: Number(body.amount),
+      type: body.type || 'expense',
+      comment: body.comment ? String(body.comment) : null,
+    };
+
     const updatedTransaction = await prisma.transaction.update({
       where: { id },
-      data: {
-        date: body.date,
-        category: body.category,
-        description: body.description,
-        amount: body.amount,
-        type: body.type || 'expense',
-        comment: body.comment || null,
-      },
+      data,
     });
 
     return NextResponse.json(updatedTransaction);
