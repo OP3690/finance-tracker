@@ -7,7 +7,7 @@ interface DailySpendChartProps {
   transactions: Transaction[];
 }
 
-export function DailySpendChart({ transactions }: DailySpendChartProps) {
+const DailySpendChart = ({ transactions }: DailySpendChartProps) => {
   if (transactions.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
@@ -54,4 +54,6 @@ export function DailySpendChart({ transactions }: DailySpendChartProps) {
       </ResponsiveContainer>
     </div>
   );
-} 
+};
+
+export default DailySpendChart; 

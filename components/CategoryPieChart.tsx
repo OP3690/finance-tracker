@@ -7,7 +7,7 @@ interface CategoryPieChartProps {
   transactions: Transaction[];
 }
 
-export function CategoryPieChart({ transactions }: CategoryPieChartProps) {
+const CategoryPieChart = ({ transactions }: CategoryPieChartProps) => {
   if (transactions.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
@@ -65,4 +65,6 @@ export function CategoryPieChart({ transactions }: CategoryPieChartProps) {
       </ResponsiveContainer>
     </div>
   );
-} 
+};
+
+export default CategoryPieChart; 
