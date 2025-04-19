@@ -41,7 +41,10 @@ export default function TransactionTable({
   };
 
   const handleDelete = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
+    setSelectedTransaction({
+      ...transaction,
+      date: new Date(transaction.date).toISOString().split('T')[0]
+    });
     setIsDeleteModalOpen(true);
   };
 
