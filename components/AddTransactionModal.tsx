@@ -55,7 +55,14 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
     setTimeout(() => {
       onClose();
       setIsClosing(false);
-    }, 200);
+      setFormData({
+        date: new Date().toISOString().split('T')[0],
+        category: '',
+        description: '',
+        amount: '',
+        comment: '',
+      });
+    }, 150);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,8 +95,18 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
   if (!isOpen && !isClosing) return null;
 
   return (
-    <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`}>
-      <div className={`bg-white rounded-lg p-6 max-w-md w-full transform transition-all duration-200 ${isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
+    <div 
+      className={`fixed inset-0 bg-black/50 flex items-center justify-center transition-all duration-150 ${
+        isClosing ? 'opacity-0' : 'opacity-100'
+      }`}
+      onClick={handleClose}
+    >
+      <div 
+        className={`bg-white rounded-lg p-6 max-w-md w-full transform transition-all duration-150 ${
+          isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold">Add New Transaction</h2>
           <button
