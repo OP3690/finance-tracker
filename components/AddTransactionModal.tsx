@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
 import { X } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 
 interface Category {
@@ -19,6 +19,7 @@ interface AddTransactionModalProps {
 
 export default function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProps) {
   const [isClosing, setIsClosing] = useState(false);
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     category: '',
@@ -75,6 +76,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
         throw new Error('Failed to add transaction');
       }
 
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
       handleClose();
       toast.success('Transaction added successfully');
     } catch (error) {
