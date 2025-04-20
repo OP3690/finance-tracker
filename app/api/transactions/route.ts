@@ -4,6 +4,7 @@ import { format, startOfMonth, endOfMonth } from 'date-fns';
 
 export async function GET(request: Request) {
   try {
+    console.log('Fetching transactions...');
     const { searchParams } = new URL(request.url);
     const month = searchParams.get('month');
     
@@ -18,6 +19,9 @@ export async function GET(request: Request) {
       };
     }
 
+    console.log('Database URL:', process.env.DATABASE_URL);
+    console.log('Query where clause:', where);
+
     const transactions = await prisma.transaction.findMany({
       where,
       orderBy: {
@@ -25,10 +29,14 @@ export async function GET(request: Request) {
       },
     });
 
+    console.log(`Found ${transactions.length} transactions`);
     return NextResponse.json(transactions);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to fetch transactions:', error);
-    return NextResponse.json({ error: 'Failed to fetch transactions' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch transactions', details: error?.message || String(error) },
+      { status: 500 }
+    );
   }
 }
 

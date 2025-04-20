@@ -24,7 +24,8 @@ export default function AnalyticsPage() {
   const { data: transactions = [], isLoading } = useQuery<Transaction[]>({
     queryKey: ['transactions'],
     queryFn: async () => {
-      const response = await fetch('/api/transactions');
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      const response = await fetch(`${baseUrl}/api/transactions`);
       if (!response.ok) {
         throw new Error('Failed to fetch transactions');
       }

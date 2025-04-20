@@ -7,7 +7,7 @@
     }
   ],
   "env": {
-    "DATABASE_URL": "mongodb+srv://omprakashutaha:Matrix$$02040@cluster0.yvxvhxr.mongodb.net/finance-tracker?retryWrites=true&w=majority",
+    "DATABASE_URL": "mongodb+srv://omprakashutaha:Matrix$$02040@cluster0.jssi7jp.mongodb.net/finance-tracker?retryWrites=true&w=majority&appName=Cluster0",
     "NEXT_PUBLIC_API_URL": "https://finance-tracker-seven-green.vercel.app"
   }
 } 
