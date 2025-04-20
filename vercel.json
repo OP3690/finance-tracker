@@ -5,5 +5,6 @@
       "src": "package.json",
       "use": "@vercel/next"
     }
-  ]
+  ],
+  "ignoreCommand": "find . -type f -name '*.ts' -not -path './app/*' -not -path './components/*' -not -path './lib/*' -not -path './prisma/schema.prisma' -delete"
 } 
