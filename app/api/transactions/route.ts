@@ -42,7 +42,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    console.log('Creating new transaction...');
     const data = await request.json();
+    console.log('Request data:', data);
+    console.log('Database URL:', process.env.DATABASE_URL);
+
     const transaction = await prisma.transaction.create({
       data: {
         date: new Date(data.date),
@@ -53,10 +57,15 @@ export async function POST(request: Request) {
       },
     });
 
+    console.log('Created transaction:', transaction);
     return NextResponse.json(transaction);
-  } catch (error) {
-    console.error('Failed to create transaction:', error);
-    return NextResponse.json({ error: 'Failed to create transaction' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Failed to create transaction. Error:', error);
+    console.error('Error stack:', error?.stack);
+    return NextResponse.json(
+      { error: 'Failed to create transaction', details: error?.message || String(error) },
+      { status: 500 }
+    );
   }
 }
 
