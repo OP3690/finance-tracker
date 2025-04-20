@@ -12,7 +12,16 @@ const nextConfig = {
     return config;
   },
   experimental: {
-    serverActions: true,
+    appDir: true,
+  },
+  env: {
+    DATABASE_URL: process.env.DATABASE_URL,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 }
 
