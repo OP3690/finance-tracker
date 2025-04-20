@@ -27,7 +27,7 @@ const COLORS = [
   '#84cc16', // lime-500
 ];
 
-export default function CategoryPieChart({ transactions }: CategoryPieChartProps) {
+export function CategoryPieChart({ transactions }: CategoryPieChartProps) {
   const categoryTotals = transactions.reduce((acc, transaction) => {
     if (transaction.category === 'Income') return acc;
     acc[transaction.category] = (acc[transaction.category] || 0) + Math.abs(transaction.amount);

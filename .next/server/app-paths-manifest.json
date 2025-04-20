@@ -1,9 +1,12 @@
 {
+  "/_not-found": "app/_not-found.js",
   "/api/transactions/route": "app/api/transactions/route.js",
-  "/page": "app/page.js",
-  "/transactions/page": "app/transactions/page.js",
-  "/api/categories/route": "app/api/categories/route.js",
   "/analytics/page": "app/analytics/page.js",
+  "/api/transactions/[id]/route": "app/api/transactions/[id]/route.js",
+  "/api/categories/route": "app/api/categories/route.js",
   "/budget/page": "app/budget/page.js",
-  "/settings/page": "app/settings/page.js"
+  "/page": "app/page.js",
+  "/categories/page": "app/categories/page.js",
+  "/settings/page": "app/settings/page.js",
+  "/transactions/page": "app/transactions/page.js"
 }

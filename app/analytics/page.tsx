@@ -5,10 +5,11 @@ import { useQuery } from '@tanstack/react-query';
 import { format, subMonths } from 'date-fns';
 import { FaMoneyBillWave, FaPiggyBank, FaChartLine } from 'react-icons/fa';
 import KeyFigureCard from '@/components/KeyFigureCard';
-import DailySpendChart from '@/components/DailySpendChart';
+import { DailySpendChart } from '@/components/DailySpendChart';
 import { formatCurrency } from '@/utils/helpers';
 import { DetailedSummary } from '@/components/DetailedSummary';
 import { Card, CardContent } from '@/components/ui/card';
+import { CategoryPieChart } from '@/components/CategoryPieChart';
 
 interface Transaction {
   id: string;

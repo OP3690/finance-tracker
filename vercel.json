@@ -7,6 +7,6 @@
     }
   ],
   "env": {
-    "MONGODB_URI": "@mongodb_uri"
+    "DATABASE_URL": "mongodb+srv://omprakashutaha:Matrix$$02040@cluster0.jssi7jp.mongodb.net/finance-tracker?retryWrites=true&w=majority&appName=Cluster0"
   }
 } 

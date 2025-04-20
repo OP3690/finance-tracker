@@ -1,32 +1,38 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Transaction } from '@prisma/client';
+import { Transaction as PrismaTransaction } from '@prisma/client';
 import { formatCurrency, formatDate } from '@/utils/helpers';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit2 } from 'lucide-react';
 import UpdateTransactionModal from './UpdateTransactionModal';
 
-interface TransactionTableProps {
-  transactions: Transaction[];
+interface Transaction {
+  id: string;
+  date: string;
+  category: string;
+  description: string;
+  amount: number;
+  comment?: string | null;
 }
 
-export function TransactionTable({ transactions }: TransactionTableProps) {
-  const [currentPage, setCurrentPage] = useState(1);
+interface TransactionTableProps {
+  transactions: Transaction[];
+  onPageChange: (page: number) => void;
+  currentPage: number;
+  totalPages: number;
+}
+
+export function TransactionTable({ transactions, onPageChange, currentPage, totalPages }: TransactionTableProps) {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(transactions.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentTransactions = transactions.slice(startIndex, endIndex);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
 
   const handleUpdateClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
@@ -46,7 +52,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     buttons.push(
       <button
         key="first"
-        onClick={() => handlePageChange(1)}
+        onClick={() => onPageChange(1)}
         disabled={currentPage === 1}
         className="px-3 py-1 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
       >
@@ -57,7 +63,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     buttons.push(
       <button
         key="prev"
-        onClick={() => handlePageChange(currentPage - 1)}
+        onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
         className="px-3 py-1 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
       >
@@ -69,7 +75,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
       buttons.push(
         <button
           key={i}
-          onClick={() => handlePageChange(i)}
+          onClick={() => onPageChange(i)}
           className={`px-3 py-1 rounded-md text-sm font-medium ${
             currentPage === i
               ? 'bg-blue-600 text-white'
@@ -84,7 +90,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     buttons.push(
       <button
         key="next"
-        onClick={() => handlePageChange(currentPage + 1)}
+        onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
         className="px-3 py-1 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
       >
@@ -95,7 +101,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     buttons.push(
       <button
         key="last"
-        onClick={() => handlePageChange(totalPages)}
+        onClick={() => onPageChange(totalPages)}
         disabled={currentPage === totalPages}
         className="px-3 py-1 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
       >

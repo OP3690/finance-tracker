@@ -17,7 +17,7 @@ interface DailySpendChartProps {
   transactions: Transaction[];
 }
 
-export default function DailySpendChart({ transactions }: DailySpendChartProps) {
+export function DailySpendChart({ transactions }: DailySpendChartProps) {
   const dailyTotals = transactions.reduce((acc, transaction) => {
     if (transaction.category === 'Income') return acc;
     const date = transaction.date.split('T')[0];
