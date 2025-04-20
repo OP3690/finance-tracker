@@ -12,7 +12,7 @@ interface Transaction {
   category: string;
   description: string;
   amount: number;
-  comment?: string | null;
+  comment?: string;
 }
 
 interface TransactionTableProps {
