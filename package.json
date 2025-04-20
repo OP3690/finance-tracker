@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --no-lint",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "cleanup": "ts-node scripts/cleanup-old-transactions.ts",
@@ -12,7 +12,8 @@
     "import": "ts-node scripts/import-transactions.ts",
     "import-categories": "ts-node scripts/import-categories.ts",
     "seed": "ts-node prisma/seed.ts",
-    "deploy": "./scripts/deploy.sh"
+    "deploy": "./scripts/deploy.sh",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.5",
