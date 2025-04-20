@@ -2,6 +2,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import type { Metadata } from 'next';
 import ClientLayout from './components/ClientLayout';
+import Providers from './providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -46,9 +47,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen`}>
         <div className="min-h-screen bg-gray-50">
-          <ClientLayout>
-            {children}
-          </ClientLayout>
+          <Providers>
+            <ClientLayout>
+              {children}
+            </ClientLayout>
+          </Providers>
         </div>
       </body>
     </html>
