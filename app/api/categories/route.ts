@@ -6,14 +6,17 @@ export async function GET() {
     console.log('Fetching categories from database...');
     const categories = await prisma.category.findMany({
       orderBy: {
-        name: 'asc',
-      },
+        name: 'asc'
+      }
     });
-    console.log(`Found ${categories.length} categories`);
+    console.log(`Successfully fetched ${categories.length} categories`);
     return NextResponse.json(categories);
   } catch (error) {
-    console.error('Failed to fetch categories:', error);
-    return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 });
+    console.error('Error fetching categories:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch categories' },
+      { status: 500 }
+    );
   }
 }
 
