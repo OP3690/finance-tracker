@@ -1,7 +1,8 @@
-prisma/
 scripts/
 *.ts
 !app/**/*.ts
 !components/**/*.ts
 !lib/**/*.ts
-!types/**/*.ts 
+!types/**/*.ts
+!prisma/schema.prisma
+!prisma/seed.ts 
