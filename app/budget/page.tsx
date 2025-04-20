@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils/helpers';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, AlertCircle, Pencil, ChevronDown, ChevronUp } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Transaction {
   id: string;
@@ -29,6 +30,7 @@ interface Budget {
 
 export default function BudgetPage() {
   const [editingBudget, setEditingBudget] = useState<string | null>(null);
+  const [showAddSection, setShowAddSection] = useState(true);
   const queryClient = useQueryClient();
 
   // Fetch budgets
@@ -146,36 +148,94 @@ export default function BudgetPage() {
     category => !budgets.some(budget => budget.categoryId === category.id)
   );
 
+  const totalBudget = budgets.reduce((sum, b) => sum + b.limit, 0);
+  const totalSpent = Object.values(spendingByCategory).reduce((sum, amount) => sum + amount, 0);
+  const totalPercentage = Math.min((totalSpent / totalBudget) * 100, 100);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Budget</h1>
-        <p className="mt-2 text-gray-600">Set and track your monthly spending limits</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Budget</h1>
+          <p className="mt-2 text-gray-600">Set and track your monthly spending limits</p>
+        </div>
+        <motion.div 
+          className="flex items-center gap-2 text-sm font-medium"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="px-4 py-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <p className="text-gray-600">Total Budget</p>
+            <p className="text-lg font-semibold text-gray-900">{formatCurrency(totalBudget)}</p>
+          </div>
+          <div className="px-4 py-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <p className="text-gray-600">Total Spent</p>
+            <p className="text-lg font-semibold text-gray-900">{formatCurrency(totalSpent)}</p>
+          </div>
+          <div className="px-4 py-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <p className="text-gray-600">Progress</p>
+            <p className="text-lg font-semibold text-gray-900">{totalPercentage.toFixed(1)}%</p>
+          </div>
+        </motion.div>
       </div>
 
       {/* Add Budget Section */}
-      {availableCategories.length > 0 && (
-        <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Add Budget Category</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {availableCategories.map(category => (
-              <div key={category.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <span className="text-sm font-medium text-gray-900">{category.name}</span>
-                <button
-                  onClick={() => createBudget.mutate({ categoryId: category.id, limit: 5000 })}
-                  className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Budget
-                </button>
-              </div>
-            ))}
-          </div>
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <div 
+          className="px-6 py-4 border-b border-gray-200 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+          onClick={() => setShowAddSection(!showAddSection)}
+        >
+          <h2 className="text-lg font-semibold text-gray-900">Add Budget Category</h2>
+          {showAddSection ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
         </div>
-      )}
+        
+        <AnimatePresence>
+          {showAddSection && availableCategories.length > 0 && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {availableCategories.map(category => (
+                  <motion.div
+                    key={category.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <span className="text-sm font-medium text-gray-900">{category.name}</span>
+                    <button
+                      onClick={() => createBudget.mutate({ categoryId: category.id, limit: 5000 })}
+                      className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Budget
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {showAddSection && availableCategories.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="px-6 py-8 text-center"
+          >
+            <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No Categories Available</h3>
+            <p className="mt-1 text-sm text-gray-500">All categories have been added to your budget.</p>
+          </motion.div>
+        )}
+      </div>
 
       {/* Budget List */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Monthly Budgets</h2>
         </div>
@@ -186,7 +246,12 @@ export default function BudgetPage() {
             const percentage = Math.min((spent / budget.limit) * 100, 100);
 
             return (
-              <div key={budget.id} className="px-6 py-4">
+              <motion.div
+                key={budget.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="px-6 py-4 hover:bg-gray-50 transition-colors"
+              >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex-1">
                     <h3 className="text-sm font-medium text-gray-900">{budget.category.name}</h3>
@@ -194,83 +259,87 @@ export default function BudgetPage() {
                       <span className="text-sm text-gray-500">
                         {formatCurrency(spent)} of {formatCurrency(budget.limit)}
                       </span>
-                      <span className="ml-2 text-sm text-gray-500">
+                      <span className={`ml-2 text-sm ${percentage > 75 ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
                         ({percentage.toFixed(1)}%)
                       </span>
                     </div>
                   </div>
                   <div className="ml-4 flex items-center space-x-4">
                     {editingBudget === budget.id ? (
-                      <input
+                      <motion.input
+                        initial={{ scale: 0.95 }}
+                        animate={{ scale: 1 }}
                         type="number"
                         value={budget.limit}
                         onChange={(e) => handleBudgetChange(budget.id, e.target.value)}
                         onBlur={() => setEditingBudget(null)}
                         autoFocus
-                        className="w-24 px-2 py-1 text-right border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-32 px-3 py-1.5 text-right border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                       />
                     ) : (
                       <button
                         onClick={() => setEditingBudget(budget.id)}
-                        className="text-sm text-blue-600 hover:text-blue-800"
+                        className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
                       >
+                        <Pencil className="h-4 w-4 mr-1" />
                         Edit
                       </button>
                     )}
                     <button
                       onClick={() => deleteBudget.mutate(budget.id)}
-                      className="text-sm text-red-600 hover:text-red-800"
+                      className="text-sm text-red-600 hover:text-red-800 transition-colors"
                     >
                       <X className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
                 <div className="relative pt-1">
-                  <div className="overflow-hidden h-2 text-xs flex rounded bg-gray-100">
-                    <div
+                  <motion.div 
+                    className="overflow-hidden h-2 text-xs flex rounded bg-gray-100"
+                    initial={{ opacity: 0, scaleX: 0 }}
+                    animate={{ opacity: 1, scaleX: 1 }}
+                  >
+                    <motion.div
                       style={{ width: `${percentage}%` }}
                       className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500 ${calculateProgress(
                         spent,
                         budget.limit
                       )}`}
-                    ></div>
-                  </div>
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      transition={{ duration: 0.5 }}
+                    ></motion.div>
+                  </motion.div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
+      </div>
 
-        <div className="px-6 py-4 bg-gray-50">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-gray-900">Total Budget</h3>
-              <p className="text-sm text-gray-500">
-                {formatCurrency(budgets.reduce((sum, b) => sum + b.limit, 0))}
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-900">Total Spent</h3>
-              <p className="text-sm text-gray-500">
-                {formatCurrency(
-                  Object.values(spendingByCategory).reduce((sum, amount) => sum + amount, 0)
-                )}
-              </p>
-            </div>
+      {/* Budget Tips */}
+      <motion.div 
+        className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100 shadow-sm"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <h2 className="text-lg font-semibold text-blue-900 mb-4">Budget Tips</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-blue-100">
+            <h3 className="text-sm font-medium text-blue-900 mb-2">Savings Goal</h3>
+            <p className="text-sm text-blue-800">Aim to save at least 20% of your income for long-term financial security.</p>
+          </div>
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-blue-100">
+            <h3 className="text-sm font-medium text-blue-900 mb-2">Essential Expenses</h3>
+            <p className="text-sm text-blue-800">Keep essential expenses under 50% of your income for better financial stability.</p>
+          </div>
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-blue-100">
+            <h3 className="text-sm font-medium text-blue-900 mb-2">50/30/20 Rule</h3>
+            <p className="text-sm text-blue-800">Allocate 50% for needs, 30% for wants, and 20% for savings and investments.</p>
           </div>
         </div>
-      </div>
-
-      <div className="mt-8 bg-blue-50 rounded-lg p-6 border border-blue-200">
-        <h2 className="text-lg font-semibold text-blue-900 mb-2">Budget Tips</h2>
-        <ul className="space-y-2 text-sm text-blue-800">
-          <li>• Aim to save at least 20% of your income</li>
-          <li>• Keep essential expenses under 50% of your income</li>
-          <li>• Review and adjust your budgets monthly</li>
-          <li>• Track your spending regularly to stay within limits</li>
-          <li>• Consider using the 50/30/20 rule: 50% needs, 30% wants, 20% savings</li>
-        </ul>
-      </div>
+      </motion.div>
     </div>
   );
 } 
