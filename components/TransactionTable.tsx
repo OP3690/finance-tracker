@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Transaction as PrismaTransaction } from '@prisma/client';
 import { formatCurrency, formatDate } from '@/utils/helpers';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit2 } from 'lucide-react';
 import UpdateTransactionModal from './UpdateTransactionModal';
@@ -183,9 +182,12 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
       </div>
       {selectedTransaction && (
         <UpdateTransactionModal
-          isOpen={isUpdateModalOpen}
-          onClose={() => setIsUpdateModalOpen(false)}
           transaction={selectedTransaction}
+          onClose={() => setIsUpdateModalOpen(false)}
+          onSuccess={() => {
+            setIsUpdateModalOpen(false);
+            // Add any success handling here
+          }}
         />
       )}
     </div>
