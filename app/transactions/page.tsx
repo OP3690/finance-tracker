@@ -53,14 +53,11 @@ export default function TransactionsPage() {
     queryKey: ['categories'],
     queryFn: async () => {
       const response = await fetch('/api/categories');
-      if (!response.ok) {
-        throw new Error('Failed to fetch categories');
-      }
       return response.json();
     },
   });
 
-  const { data: transactions = [], isLoading, isError } = useQuery<Transaction[]>({
+  const { data: transactions = [], isLoading } = useQuery<Transaction[]>({
     queryKey: ['transactions'],
     queryFn: async () => {
       const response = await fetch('/api/transactions');
@@ -85,27 +82,22 @@ export default function TransactionsPage() {
     }));
   }, []);
 
-  const filteredTransactions = React.useMemo(() => {
-    if (!Array.isArray(transactions)) return [];
-    
-    return transactions
-      .filter((transaction) => {
-        if (!transaction) return false;
-        if (filters.category && transaction.category !== filters.category) return false;
-        if (filters.startDate && new Date(transaction.date) < new Date(filters.startDate)) return false;
-        if (filters.endDate && new Date(transaction.date) > new Date(filters.endDate)) return false;
-        if (filters.minAmount && transaction.amount < parseFloat(filters.minAmount)) return false;
-        if (filters.maxAmount && transaction.amount > parseFloat(filters.maxAmount)) return false;
-        if (
-          filters.searchTerm &&
-          !transaction.description.toLowerCase().includes(filters.searchTerm.toLowerCase()) &&
-          !transaction.category.toLowerCase().includes(filters.searchTerm.toLowerCase())
-        )
-          return false;
-        return true;
-      })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [transactions, filters]);
+  const filteredTransactions = (Array.isArray(transactions) ? transactions : [])
+    .filter((transaction) => {
+      if (filters.category && transaction.category !== filters.category) return false;
+      if (filters.startDate && new Date(transaction.date) < new Date(filters.startDate)) return false;
+      if (filters.endDate && new Date(transaction.date) > new Date(filters.endDate)) return false;
+      if (filters.minAmount && transaction.amount < parseFloat(filters.minAmount)) return false;
+      if (filters.maxAmount && transaction.amount > parseFloat(filters.maxAmount)) return false;
+      if (
+        filters.searchTerm &&
+        !transaction.description.toLowerCase().includes(filters.searchTerm.toLowerCase()) &&
+        !transaction.category.toLowerCase().includes(filters.searchTerm.toLowerCase())
+      )
+        return false;
+      return true;
+    })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
   const paginatedTransactions = filteredTransactions.slice(

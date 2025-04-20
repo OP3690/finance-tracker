@@ -17,12 +17,12 @@ interface CategoryPieChartProps {
   transactions: Transaction[];
 }
 
-const CategoryPieChart = ({ transactions }: CategoryPieChartProps) => {
-  if (!transactions || transactions.length === 0) {
+export const CategoryPieChart = ({ transactions }: CategoryPieChartProps) => {
+  if (!Array.isArray(transactions) || transactions.length === 0) {
     return <div className="text-center p-4">No transactions to display</div>;
   }
 
-  const categoryTotals = transactions
+  const categoryTotals = (Array.isArray(transactions) ? transactions : [])
     .filter(t => t.category !== 'Income')
     .reduce((acc, transaction) => {
       const { category, amount } = transaction;

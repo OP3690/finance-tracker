@@ -34,12 +34,16 @@ export default function Dashboard() {
     queryKey: ['transactions'],
     queryFn: async () => {
       const response = await fetch('/api/transactions');
-      return response.json();
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions');
+      }
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
   const getMonthlyTotal = (month: Date, category?: string) => {
-    return transactions
+    return (Array.isArray(transactions) ? transactions : [])
       .filter(t => {
         const transactionDate = new Date(t.date);
         return transactionDate.getMonth() === month.getMonth() &&
@@ -58,7 +62,7 @@ export default function Dashboard() {
   };
 
   const getCurrentMonthEMIs = () => {
-    return transactions
+    return (Array.isArray(transactions) ? transactions : [])
       .filter(t => {
         const transactionDate = new Date(t.date);
         return transactionDate.getMonth() === currentMonth.getMonth() &&
@@ -70,7 +74,7 @@ export default function Dashboard() {
   };
 
   const getCurrentMonthHouseholdExpenses = () => {
-    return transactions
+    return (Array.isArray(transactions) ? transactions : [])
       .filter(t => {
         const transactionDate = new Date(t.date);
         return transactionDate.getMonth() === currentMonth.getMonth() &&
@@ -93,7 +97,7 @@ export default function Dashboard() {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    return transactions
+    return (Array.isArray(transactions) ? transactions : [])
       .filter(t => {
         const transactionDate = new Date(t.date);
         return transactionDate >= today &&
@@ -107,13 +111,13 @@ export default function Dashboard() {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
-  const totalIncome = transactions
-    ?.filter((t: any) => t.category === 'Income')
-    .reduce((sum: number, t: any) => sum + t.amount, 0) || 0;
+  const totalIncome = (Array.isArray(transactions) ? transactions : [])
+    .filter((t) => t.category === 'Income')
+    .reduce((sum, t) => sum + t.amount, 0);
 
-  const totalExpenses = transactions
-    ?.filter((t: any) => t.category !== 'Income')
-    .reduce((sum: number, t: any) => sum + t.amount, 0) || 0;
+  const totalExpenses = (Array.isArray(transactions) ? transactions : [])
+    .filter((t) => t.category !== 'Income')
+    .reduce((sum, t) => sum + t.amount, 0);
 
   const balance = totalIncome - totalExpenses;
 

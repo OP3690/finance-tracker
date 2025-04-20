@@ -1,6 +1,12 @@
 'use client';
 
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { FaMoneyBillWave, FaPiggyBank, FaChartLine } from 'react-icons/fa';
+import KeyFigureCard from '@/components/KeyFigureCard';
+import CategoryPieChart from '@/components/CategoryPieChart';
+import DailySpendChart from '@/components/DailySpendChart';
 import { formatCurrency } from '@/utils/helpers';
 import { DetailedSummary } from '@/components/DetailedSummary';
 
@@ -14,19 +20,23 @@ interface Transaction {
 }
 
 export default function AnalyticsPage() {
-  const { data: transactions = [] } = useQuery<Transaction[]>({
+  const { data: transactions = [], isLoading } = useQuery<Transaction[]>({
     queryKey: ['transactions'],
     queryFn: async () => {
       const response = await fetch('/api/transactions');
-      return response.json();
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions');
+      }
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
-  const totalIncome = transactions
+  const totalIncome = (Array.isArray(transactions) ? transactions : [])
     .filter((t) => t.category.toLowerCase() === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const totalExpenses = transactions
+  const totalExpenses = (Array.isArray(transactions) ? transactions : [])
     .filter((t) => t.category.toLowerCase() !== 'income')
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 

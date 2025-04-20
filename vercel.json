@@ -7,7 +7,6 @@
     }
   ],
   "env": {
-    "DATABASE_URL": "@database_url",
-    "NEXT_PUBLIC_API_URL": "/api"
+    "MONGODB_URI": "@mongodb_uri"
   }
 } 

@@ -36,16 +36,17 @@ const formatYAxisValue = (value: number) => {
   return value.toString();
 };
 
-const DailySpendChart = ({ transactions }: DailySpendChartProps) => {
-  if (!transactions || transactions.length === 0) {
+export const DailySpendChart = ({ transactions }: DailySpendChartProps) => {
+  if (!Array.isArray(transactions) || transactions.length === 0) {
     return <div className="text-center p-4">No transactions to display</div>;
   }
 
-  const dailyTotals = transactions.reduce((acc, transaction) => {
-    const date = new Date(transaction.date).toISOString().split('T')[0];
-    acc[date] = (acc[date] || 0) + transaction.amount;
-    return acc;
-  }, {} as Record<string, number>);
+  const dailyTotals = (Array.isArray(transactions) ? transactions : [])
+    .reduce((acc, transaction) => {
+      const date = new Date(transaction.date).toISOString().split('T')[0];
+      acc[date] = (acc[date] || 0) + transaction.amount;
+      return acc;
+    }, {} as Record<string, number>);
 
   const data = Object.entries(dailyTotals)
     .map(([date, amount]) => ({
