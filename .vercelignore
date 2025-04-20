@@ -1,0 +1,7 @@
+prisma/
+scripts/
+*.ts
+!app/**/*.ts
+!components/**/*.ts
+!lib/**/*.ts
+!types/**/*.ts 
