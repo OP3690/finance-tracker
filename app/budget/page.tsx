@@ -28,6 +28,18 @@ interface Budget {
   category: Category;
 }
 
+// Define category order
+const CATEGORY_ORDER = [
+  'Groceries',
+  'Recharge/Bill/EMI Payment',
+  'Healthcare',
+  'Transportation',
+  'Education - Books',
+  'Cloths',
+  'Insurance',
+  'Other Expenses'
+];
+
 export default function BudgetPage() {
   const [editingBudget, setEditingBudget] = useState<string | null>(null);
   const [showAddSection, setShowAddSection] = useState(true);
@@ -143,12 +155,29 @@ export default function BudgetPage() {
     return 'bg-red-500';
   };
 
-  // Get categories that don't have a budget yet, excluding Income and Investment
-  const availableCategories = categories.filter(
-    category => 
-      !['Income', 'Investment'].includes(category.name) && 
-      !budgets.some(budget => budget.categoryId === category.id)
-  );
+  // Get categories that don't have a budget yet, excluding Income and Investment, and sort by defined order
+  const availableCategories = categories
+    .filter(
+      category => 
+        !['Income', 'Investment'].includes(category.name) && 
+        !budgets.some(budget => budget.categoryId === category.id)
+    )
+    .sort((a, b) => {
+      const orderA = CATEGORY_ORDER.indexOf(a.name);
+      const orderB = CATEGORY_ORDER.indexOf(b.name);
+      
+      // If both categories are in the order list, sort by their position
+      if (orderA !== -1 && orderB !== -1) {
+        return orderA - orderB;
+      }
+      
+      // If only one category is in the order list, prioritize it
+      if (orderA !== -1) return -1;
+      if (orderB !== -1) return 1;
+      
+      // If neither category is in the order list, sort alphabetically
+      return a.name.localeCompare(b.name);
+    });
 
   // Calculate totals excluding Investment category
   const totalBudget = budgets
@@ -251,6 +280,22 @@ export default function BudgetPage() {
         <div className="divide-y divide-gray-200">
           {budgets
             .filter(budget => budget.category.name !== 'Investment')
+            .sort((a, b) => {
+              const orderA = CATEGORY_ORDER.indexOf(a.category.name);
+              const orderB = CATEGORY_ORDER.indexOf(b.category.name);
+              
+              // If both categories are in the order list, sort by their position
+              if (orderA !== -1 && orderB !== -1) {
+                return orderA - orderB;
+              }
+              
+              // If only one category is in the order list, prioritize it
+              if (orderA !== -1) return -1;
+              if (orderB !== -1) return 1;
+              
+              // If neither category is in the order list, sort alphabetically
+              return a.category.name.localeCompare(b.category.name);
+            })
             .map((budget) => {
               const spent = spendingByCategory[budget.category.name] || 0;
               const percentage = Math.min((spent / budget.limit) * 100, 100);
