@@ -136,11 +136,12 @@ export function CategoryPieChart({ transactions }: CategoryPieChartProps) {
           <Legend 
             layout="vertical" 
             align="right"
-            verticalAlign="middle"
+            verticalAlign="top"
             wrapperStyle={{
               paddingLeft: '20px',
               maxWidth: '160px',
-              fontSize: '0.75rem'
+              fontSize: '0.75rem',
+              marginTop: '20px'
             }}
             formatter={(value, entry: any) => {
               const label = `${value} (${entry.payload.percentage}%)`;
