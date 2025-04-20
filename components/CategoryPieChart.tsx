@@ -110,17 +110,17 @@ export function CategoryPieChart({ transactions }: CategoryPieChartProps) {
   };
 
   return (
-    <div className="w-full h-[400px] p-4">
+    <div className="w-full h-[350px] p-2">
       <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
+        <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
           <Pie
             data={data}
             cx="50%"
             cy="50%"
             labelLine={false}
             label={renderCustomizedLabel}
-            outerRadius={120}
-            innerRadius={60}
+            outerRadius={110}
+            innerRadius={55}
             paddingAngle={1}
             dataKey="value"
           >
