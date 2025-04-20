@@ -9,10 +9,26 @@ const nextConfig = {
         fs: false,
       };
     }
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': __dirname,
+      '@/components': `${__dirname}/components`,
+      '@/utils': `${__dirname}/utils`,
+      '@/lib': `${__dirname}/lib`,
+      '@/types': `${__dirname}/types`,
+    };
+    config.resolve.extensions = ['.ts', '.tsx', '.js', '.jsx'];
+    config.resolve.modules = ['node_modules', __dirname];
+    config.resolve.mainFields = ['browser', 'main', 'module'];
+    config.resolve.symlinks = false;
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      path: false,
+      fs: false,
+    };
     return config;
   },
   experimental: {
-    appDir: true,
   },
   env: {
     DATABASE_URL: process.env.DATABASE_URL,

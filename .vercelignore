@@ -5,4 +5,12 @@ scripts/
 !lib/**/*.ts
 !types/**/*.ts
 !prisma/schema.prisma
-!prisma/seed.ts 
+!prisma/seed.ts
+!utils/**/*.ts
+!next.config.js
+!tsconfig.json
+!package.json
+!package-lock.json
+!prisma/client/
+!prisma/generated/
+!utils/ 

@@ -1,15 +1,19 @@
 // Helper functions for finance tracker
 
+import { format } from 'date-fns';
+
 export const parseAmount = (amount: string | number): number => {
   if (typeof amount === 'number') return amount;
   return parseFloat(amount.replace(/[^0-9.-]+/g, ''));
 };
 
 export const formatCurrency = (amount: number): string => {
-  return `₹${Math.abs(amount).toLocaleString('en-IN', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
 };
 
 export const parseDate = (date: string | Date): Date => {
@@ -22,15 +26,8 @@ export const calculatePercentageChange = (current: number, previous: number): st
   return `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`;
 };
 
-export const formatDate = (date: Date, format: string = "dd/MM/yyyy"): string => {
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const year = date.getFullYear();
-  return format
-    .replace("dd", day)
-    .replace("MM", month)
-    .replace("yyyy", year.toString())
-    .replace("yy", year.toString().slice(-2));
+export const formatDate = (date: Date): string => {
+  return format(date, 'dd MMM yyyy');
 };
 
 export const formatMonthYear = (date: Date): string => {
@@ -83,6 +80,27 @@ export const generatePeriods = (today: Date = new Date()): Period[] => {
       };
     })
   ];
+};
+
+export const calculatePercentage = (value: number, total: number): number => {
+  if (total === 0) return 0;
+  return Math.round((value / total) * 100);
+};
+
+export const getCategoryColor = (category: string): string => {
+  const colors: { [key: string]: string } = {
+    'Groceries': '#FF6384',
+    'Transportation': '#36A2EB',
+    'Recharge/Bill/EMI Payment': '#FFCE56',
+    'Healthcare': '#4BC0C0',
+    'Insurance': '#9966FF',
+    'Cloths': '#FF9F40',
+    'Education - Books': '#FF6384',
+    'Investment': '#36A2EB',
+    'Income': '#4BC0C0',
+    'Other Expenses': '#FFCE56',
+  };
+  return colors[category] || '#CCCCCC';
 };
 
 export const COLORS = {
