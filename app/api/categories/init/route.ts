@@ -47,6 +47,11 @@ const initialCategories = [
 ];
 
 export async function GET() {
+  // Skip database operations during build time
+  if (process.env.SKIP_DB_INIT === 'true') {
+    return NextResponse.json({ message: 'Database initialization skipped during build' });
+  }
+
   try {
     console.log('Initializing categories...');
     

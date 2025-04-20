@@ -32,6 +32,7 @@ const nextConfig = {
   },
   env: {
     DATABASE_URL: process.env.DATABASE_URL,
+    SKIP_DB_INIT: process.env.NODE_ENV === 'production' ? 'true' : 'false'
   },
   typescript: {
     ignoreBuildErrors: true,
