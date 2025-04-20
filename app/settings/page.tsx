@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, Edit2, ChevronRight, Save, X, BarChart2, AlertTriangle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface Category {
   id: string;
@@ -21,13 +22,11 @@ export default function SettingsPage() {
   const [newCategory, setNewCategory] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [editingDescription, setEditingDescription] = useState<{ id: string; text: string; originalText: string } | null>(null);
+  const [editingDescription, setEditingDescription] = useState<{ text: string; originalText: string } | null>(null);
   const [isAddingDescription, setIsAddingDescription] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<{
     description: string;
-    categoryId: string;
-    descriptionId: string;
     lastThreeMonthsCount: number;
   } | null>(null);
   const queryClient = useQueryClient();
@@ -36,6 +35,9 @@ export default function SettingsPage() {
     queryKey: ['categories'],
     queryFn: async () => {
       const response = await fetch('/api/categories');
+      if (!response.ok) {
+        throw new Error('Failed to fetch categories');
+      }
       return response.json();
     },
   });
@@ -44,6 +46,9 @@ export default function SettingsPage() {
     queryKey: ['transactions'],
     queryFn: async () => {
       const response = await fetch('/api/transactions');
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions');
+      }
       return response.json();
     },
   });
@@ -87,110 +92,106 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, descriptions: [] }),
       });
+      if (!response.ok) {
+        throw new Error('Failed to create category');
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setNewCategory('');
+      toast.success('Category added successfully');
+    },
+    onError: () => {
+      toast.error('Failed to add category');
     },
   });
 
   const addDescriptionMutation = useMutation({
-    mutationFn: async ({ categoryId, description }: { categoryId: string; description: string }) => {
-      const response = await fetch(`/api/categories/${categoryId}/descriptions`, {
+    mutationFn: async (description: string) => {
+      if (!selectedCategory) throw new Error('No category selected');
+      const response = await fetch(`/api/categories/${selectedCategory.id}/descriptions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description }),
       });
+      if (!response.ok) {
+        throw new Error('Failed to add description');
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setNewDescription('');
       setIsAddingDescription(false);
+      toast.success('Description added successfully');
+    },
+    onError: () => {
+      toast.error('Failed to add description');
     },
   });
 
   const updateDescriptionMutation = useMutation({
-    mutationFn: async ({ categoryId, descriptionId, newDescription }: { 
-      categoryId: string; 
-      descriptionId: string; 
-      newDescription: string 
-    }) => {
-      const response = await fetch(`/api/categories/${categoryId}/descriptions/${descriptionId}`, {
+    mutationFn: async ({ oldDescription, newDescription }: { oldDescription: string; newDescription: string }) => {
+      if (!selectedCategory) throw new Error('No category selected');
+      const response = await fetch(`/api/categories/${selectedCategory.id}/descriptions`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: newDescription }),
+        body: JSON.stringify({ description: oldDescription, newDescription }),
       });
+      if (!response.ok) {
+        throw new Error('Failed to update description');
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setEditingDescription(null);
+      toast.success('Description updated successfully');
+    },
+    onError: () => {
+      toast.error('Failed to update description');
     },
   });
 
   const deleteDescriptionMutation = useMutation({
-    mutationFn: async ({ categoryId, descriptionId }: { categoryId: string; descriptionId: string }) => {
-      const response = await fetch(`/api/categories/${categoryId}/descriptions/${descriptionId}`, {
+    mutationFn: async (description: string) => {
+      if (!selectedCategory) throw new Error('No category selected');
+      const response = await fetch(`/api/categories/${selectedCategory.id}/descriptions`, {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description }),
       });
+      if (!response.ok) {
+        throw new Error('Failed to delete description');
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      setShowDeleteModal(null);
+      toast.success('Description deleted successfully');
+    },
+    onError: () => {
+      toast.error('Failed to delete description');
     },
   });
 
-  const moveDescriptionMutation = useMutation({
-    mutationFn: async ({ 
-      fromCategoryId, 
-      toCategoryId, 
-      description 
-    }: { 
-      fromCategoryId: string; 
-      toCategoryId: string; 
-      description: string 
-    }) => {
-      // First delete from old category
-      await fetch(`/api/categories/${fromCategoryId}/descriptions`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description }),
-      });
-      // Then add to new category
-      await fetch(`/api/categories/${toCategoryId}/descriptions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description }),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-    },
-  });
-
-  const handleDeleteClick = (categoryId: string, descriptionId: string, description: string) => {
+  const handleDeleteClick = (description: string) => {
     const usage = descriptionUsage.find(item => item.description === description);
     setShowDeleteModal({
       description,
-      categoryId,
-      descriptionId,
       lastThreeMonthsCount: usage?.lastThreeMonthsCount || 0
     });
   };
 
   const handleConfirmDelete = () => {
     if (showDeleteModal) {
-      deleteDescriptionMutation.mutate({
-        categoryId: showDeleteModal.categoryId,
-        descriptionId: showDeleteModal.descriptionId,
-      });
-      setShowDeleteModal(null);
+      deleteDescriptionMutation.mutate(showDeleteModal.description);
     }
   };
 
-  const getDescriptionColor = (lastThreeMonthsCount: number, totalTransactions: number) => {
+  const getDescriptionColor = (lastThreeMonthsCount: number) => {
     const percentage = (lastThreeMonthsCount / totalTransactions) * 100;
     if (percentage > 25) {
       return 'bg-green-50 hover:bg-green-100';
@@ -307,15 +308,14 @@ export default function SettingsPage() {
                 </div>
               )}
               <div className="divide-y divide-gray-200">
-                {selectedCategory.descriptions.map((description, index) => {
+                {selectedCategory.descriptions.map((description) => {
                   const usage = descriptionUsage.find(item => item.description === description);
-                  const totalTransactions = transactions.length;
-                  const colorClass = getDescriptionColor(usage?.lastThreeMonthsCount || 0, totalTransactions);
+                  const colorClass = getDescriptionColor(usage?.lastThreeMonthsCount || 0);
                   
                   return (
-                    <div key={index} className={`px-6 py-4 ${colorClass}`}>
+                    <div key={description} className={`px-6 py-4 ${colorClass}`}>
                       <div className="flex items-center justify-between">
-                        {editingDescription?.id === `${selectedCategory.id}-${index}` ? (
+                        {editingDescription?.originalText === description ? (
                           <div className="flex-1 flex items-center space-x-2">
                             <input
                               type="text"
@@ -328,8 +328,7 @@ export default function SettingsPage() {
                               onClick={() => {
                                 if (editingDescription.text.trim()) {
                                   updateDescriptionMutation.mutate({
-                                    categoryId: selectedCategory.id,
-                                    descriptionId: `${selectedCategory.id}-${index}`,
+                                    oldDescription: editingDescription.originalText,
                                     newDescription: editingDescription.text,
                                   });
                                 }
@@ -351,7 +350,6 @@ export default function SettingsPage() {
                             <div className="flex items-center space-x-2">
                               <button
                                 onClick={() => setEditingDescription({ 
-                                  id: `${selectedCategory.id}-${index}`, 
                                   text: description,
                                   originalText: description
                                 })}
@@ -360,7 +358,7 @@ export default function SettingsPage() {
                                 <Edit2 className="h-4 w-4" />
                               </button>
                               <button
-                                onClick={() => handleDeleteClick(selectedCategory.id, `${selectedCategory.id}-${index}`, description)}
+                                onClick={() => handleDeleteClick(description)}
                                 className="text-gray-400 hover:text-red-500"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -386,10 +384,7 @@ export default function SettingsPage() {
                     <button
                       onClick={() => {
                         if (newDescription.trim()) {
-                          addDescriptionMutation.mutate({
-                            categoryId: selectedCategory.id,
-                            description: newDescription,
-                          });
+                          addDescriptionMutation.mutate(newDescription);
                         }
                       }}
                       className="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -417,38 +412,34 @@ export default function SettingsPage() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <div className="flex items-center mb-4">
-              <AlertTriangle className="h-6 w-6 text-red-500 mr-2" />
-              <h3 className="text-lg font-semibold">Confirm Deletion</h3>
+            <div className="flex items-start mb-4">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-6 w-6 text-yellow-400" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-medium text-gray-900">Delete Description</h3>
+                <p className="mt-2 text-sm text-gray-500">
+                  Are you sure you want to delete "{showDeleteModal.description}"?
+                  {showDeleteModal.lastThreeMonthsCount > 0 && (
+                    <span className="block mt-2 text-yellow-600">
+                      Warning: This description has been used {showDeleteModal.lastThreeMonthsCount} times in the last 3 months.
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
-            <p className="mb-4">
-              Do You Really Want to Remove{' '}
-              <span className="text-red-500 font-bold underline">
-                {showDeleteModal.description}
-              </span>
-              {' '}Sub Category
-              {showDeleteModal.lastThreeMonthsCount > 0 && (
-                <span className="text-gray-600">
-                  ? It has been used{' '}
-                  <span className="text-black font-bold">
-                    {showDeleteModal.lastThreeMonthsCount}
-                  </span>
-                  {' '}times in the last 3 months.
-                </span>
-              )}
-            </p>
-            <div className="flex justify-end space-x-4">
+            <div className="mt-6 flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteModal(null)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
               >
                 Delete
               </button>
