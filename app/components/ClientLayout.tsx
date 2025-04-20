@@ -1,21 +1,76 @@
 'use client';
 
-import Navbar from '@/components/Navbar';
-import Providers from '../providers';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { Toaster } from 'react-hot-toast';
 
 export default function ClientLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
   return (
-    <Providers>
-      <div className="min-h-screen">
-        <Navbar />
-        <main className="container mx-auto px-4 py-8">
-          {children}
-        </main>
-      </div>
-    </Providers>
+    <>
+      <nav className="sticky top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm backdrop-blur-sm bg-white/90">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <Link href="/" className="text-xl font-bold text-gray-900 flex items-center">
+                <span className="text-blue-600 mr-2">$</span>
+                Finance Tracker
+              </Link>
+            </div>
+            <div className="flex space-x-4">
+              <Link
+                href="/"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  pathname === '/' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/transactions"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  pathname === '/transactions' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Transactions
+              </Link>
+              <Link
+                href="/analytics"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  pathname === '/analytics' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Analytics
+              </Link>
+              <Link
+                href="/budget"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  pathname === '/budget' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Budget
+              </Link>
+              <Link
+                href="/settings"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  pathname === '/settings' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Settings
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <main>
+        {children}
+      </main>
+      <Toaster position="top-right" />
+    </>
   );
 } 
