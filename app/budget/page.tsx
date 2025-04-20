@@ -126,7 +126,7 @@ export default function BudgetPage() {
   );
 
   const spendingByCategory = currentMonthTransactions.reduce((acc, transaction) => {
-    if (transaction.category.toLowerCase() !== 'income') {
+    if (!['income', 'investment'].includes(transaction.category.toLowerCase())) {
       acc[transaction.category] = (acc[transaction.category] || 0) + transaction.amount;
     }
     return acc;
@@ -143,14 +143,22 @@ export default function BudgetPage() {
     return 'bg-red-500';
   };
 
-  // Get categories that don't have a budget yet
+  // Get categories that don't have a budget yet, excluding Income and Investment
   const availableCategories = categories.filter(
-    category => !budgets.some(budget => budget.categoryId === category.id)
+    category => 
+      !['Income', 'Investment'].includes(category.name) && 
+      !budgets.some(budget => budget.categoryId === category.id)
   );
 
-  const totalBudget = budgets.reduce((sum, b) => sum + b.limit, 0);
-  const totalSpent = Object.values(spendingByCategory).reduce((sum, amount) => sum + amount, 0);
-  const totalPercentage = Math.min((totalSpent / totalBudget) * 100, 100);
+  // Calculate totals excluding Investment category
+  const totalBudget = budgets
+    .filter(budget => budget.category.name !== 'Investment')
+    .reduce((sum, b) => sum + b.limit, 0);
+
+  const totalSpent = Object.values(spendingByCategory)
+    .reduce((sum, amount) => sum + amount, 0);
+
+  const totalPercentage = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -241,79 +249,81 @@ export default function BudgetPage() {
         </div>
 
         <div className="divide-y divide-gray-200">
-          {budgets.map((budget) => {
-            const spent = spendingByCategory[budget.category.name] || 0;
-            const percentage = Math.min((spent / budget.limit) * 100, 100);
+          {budgets
+            .filter(budget => budget.category.name !== 'Investment')
+            .map((budget) => {
+              const spent = spendingByCategory[budget.category.name] || 0;
+              const percentage = Math.min((spent / budget.limit) * 100, 100);
 
-            return (
-              <motion.div
-                key={budget.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="px-6 py-4 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-gray-900">{budget.category.name}</h3>
-                    <div className="flex items-center mt-1">
-                      <span className="text-sm text-gray-500">
-                        {formatCurrency(spent)} of {formatCurrency(budget.limit)}
-                      </span>
-                      <span className={`ml-2 text-sm ${percentage > 75 ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
-                        ({percentage.toFixed(1)}%)
-                      </span>
+              return (
+                <motion.div
+                  key={budget.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="px-6 py-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-gray-900">{budget.category.name}</h3>
+                      <div className="flex items-center mt-1">
+                        <span className="text-sm text-gray-500">
+                          {formatCurrency(spent)} of {formatCurrency(budget.limit)}
+                        </span>
+                        <span className={`ml-2 text-sm ${percentage > 75 ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                          ({percentage.toFixed(1)}%)
+                        </span>
+                      </div>
+                    </div>
+                    <div className="ml-4 flex items-center space-x-4">
+                      {editingBudget === budget.id ? (
+                        <motion.input
+                          initial={{ scale: 0.95 }}
+                          animate={{ scale: 1 }}
+                          type="number"
+                          value={budget.limit}
+                          onChange={(e) => handleBudgetChange(budget.id, e.target.value)}
+                          onBlur={() => setEditingBudget(null)}
+                          autoFocus
+                          className="w-32 px-3 py-1.5 text-right border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                        />
+                      ) : (
+                        <button
+                          onClick={() => setEditingBudget(budget.id)}
+                          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                        >
+                          <Pencil className="h-4 w-4 mr-1" />
+                          Edit
+                        </button>
+                      )}
+                      <button
+                        onClick={() => deleteBudget.mutate(budget.id)}
+                        className="text-sm text-red-600 hover:text-red-800 transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
-                  <div className="ml-4 flex items-center space-x-4">
-                    {editingBudget === budget.id ? (
-                      <motion.input
-                        initial={{ scale: 0.95 }}
-                        animate={{ scale: 1 }}
-                        type="number"
-                        value={budget.limit}
-                        onChange={(e) => handleBudgetChange(budget.id, e.target.value)}
-                        onBlur={() => setEditingBudget(null)}
-                        autoFocus
-                        className="w-32 px-3 py-1.5 text-right border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                      />
-                    ) : (
-                      <button
-                        onClick={() => setEditingBudget(budget.id)}
-                        className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
-                      >
-                        <Pencil className="h-4 w-4 mr-1" />
-                        Edit
-                      </button>
-                    )}
-                    <button
-                      onClick={() => deleteBudget.mutate(budget.id)}
-                      className="text-sm text-red-600 hover:text-red-800 transition-colors"
+                  <div className="relative pt-1">
+                    <motion.div 
+                      className="overflow-hidden h-2 text-xs flex rounded bg-gray-100"
+                      initial={{ opacity: 0, scaleX: 0 }}
+                      animate={{ opacity: 1, scaleX: 1 }}
                     >
-                      <X className="h-4 w-4" />
-                    </button>
+                      <motion.div
+                        style={{ width: `${percentage}%` }}
+                        className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500 ${calculateProgress(
+                          spent,
+                          budget.limit
+                        )}`}
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: 0.5 }}
+                      ></motion.div>
+                    </motion.div>
                   </div>
-                </div>
-                <div className="relative pt-1">
-                  <motion.div 
-                    className="overflow-hidden h-2 text-xs flex rounded bg-gray-100"
-                    initial={{ opacity: 0, scaleX: 0 }}
-                    animate={{ opacity: 1, scaleX: 1 }}
-                  >
-                    <motion.div
-                      style={{ width: `${percentage}%` }}
-                      className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500 ${calculateProgress(
-                        spent,
-                        budget.limit
-                      )}`}
-                      initial={{ scaleX: 0 }}
-                      animate={{ scaleX: 1 }}
-                      transition={{ duration: 0.5 }}
-                    ></motion.div>
-                  </motion.div>
-                </div>
-              </motion.div>
-            );
-          })}
+                </motion.div>
+              );
+            })}
         </div>
       </div>
 
