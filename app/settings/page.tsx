@@ -103,14 +103,14 @@ export default function SettingsPage() {
     onMutate: async (newCategory) => {
       await queryClient.cancelQueries({ queryKey: ['categories'] });
       const previousCategories = queryClient.getQueryData(['categories']);
-      queryClient.setQueryData(['categories'], (old: Category[] = []) => [
-        ...old,
-        { id: 'temp', name: newCategory, descriptions: [] }
-      ]);
+      const newCategoryData = { id: 'temp', name: newCategory, descriptions: [] };
+      queryClient.setQueryData(['categories'], (old: Category[] = []) => [...old, newCategoryData]);
       return { previousCategories };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    onSuccess: (data) => {
+      queryClient.setQueryData(['categories'], (old: Category[] = []) => 
+        old.map(category => category.id === 'temp' ? data : category)
+      );
       setNewCategory('');
       toast.success('Category added successfully');
     },
@@ -143,10 +143,18 @@ export default function SettingsPage() {
             : category
         )
       );
+      if (selectedCategory) {
+        setSelectedCategory(prev => prev ? {
+          ...prev,
+          descriptions: [...prev.descriptions, newDescription]
+        } : null);
+      }
       return { previousCategories };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    onSuccess: (data) => {
+      queryClient.setQueryData(['categories'], (old: Category[] = []) => 
+        old.map(category => category.id === data.id ? data : category)
+      );
       setNewDescription('');
       setIsAddingDescription(false);
       toast.success('Description added successfully');
@@ -203,10 +211,18 @@ export default function SettingsPage() {
             : category
         )
       );
+      if (selectedCategory) {
+        setSelectedCategory(prev => prev ? {
+          ...prev,
+          descriptions: prev.descriptions.filter(d => d !== description)
+        } : null);
+      }
       return { previousCategories };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    onSuccess: (data) => {
+      queryClient.setQueryData(['categories'], (old: Category[] = []) => 
+        old.map(category => category.id === data.id ? data : category)
+      );
       setShowDeleteModal(null);
       toast.success('Description deleted successfully');
     },
