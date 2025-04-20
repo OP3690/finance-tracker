@@ -117,8 +117,8 @@ export function CategoryPieChart({ transactions }: CategoryPieChartProps) {
             cy="50%"
             labelLine={false}
             label={renderCustomizedLabel}
-            outerRadius={150}
-            innerRadius={75}
+            outerRadius={120}
+            innerRadius={60}
             paddingAngle={1}
             dataKey="value"
           >
@@ -133,10 +133,14 @@ export function CategoryPieChart({ transactions }: CategoryPieChartProps) {
           <Tooltip content={<CustomTooltip />} />
           <Legend 
             layout="vertical" 
-            align="right" 
+            align="right"
             verticalAlign="middle"
+            wrapperStyle={{
+              paddingLeft: '20px',
+              maxWidth: '180px'
+            }}
             formatter={(value, entry: any) => (
-              <span className="text-sm text-gray-700">
+              <span className="text-sm text-gray-700 truncate block" style={{ maxWidth: '150px' }}>
                 {value} ({entry.payload.percentage}%)
               </span>
             )}
