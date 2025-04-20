@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils/helpers';
+import { Plus, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface Transaction {
   id: string;
@@ -12,15 +14,42 @@ interface Transaction {
   amount: number;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  descriptions: string[];
+}
+
 interface Budget {
-  category: string;
+  id: string;
   limit: number;
+  categoryId: string;
+  category: Category;
 }
 
 export default function BudgetPage() {
-  const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [editingCategory, setEditingCategory] = useState<string | null>(null);
+  const [editingBudget, setEditingBudget] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
+  // Fetch budgets
+  const { data: budgets = [] } = useQuery<Budget[]>({
+    queryKey: ['budgets'],
+    queryFn: async () => {
+      const response = await fetch('/api/budgets');
+      return response.json();
+    },
+  });
+
+  // Fetch all categories
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const response = await fetch('/api/categories');
+      return response.json();
+    },
+  });
+
+  // Fetch transactions
   const { data: transactions = [] } = useQuery<Transaction[]>({
     queryKey: ['transactions'],
     queryFn: async () => {
@@ -29,22 +58,63 @@ export default function BudgetPage() {
     },
   });
 
-  useEffect(() => {
-    if (transactions.length > 0) {
-      // Get unique categories excluding 'Income'
-      const categories = Array.from(new Set(transactions
-        .map(t => t.category)
-        .filter(c => c.toLowerCase() !== 'income')));
-      
-      // Initialize budgets with default value of 5000
-      const initialBudgets = categories.map(category => ({
-        category,
-        limit: 5000
-      }));
-      
-      setBudgets(initialBudgets);
-    }
-  }, [transactions]);
+  // Create budget mutation
+  const createBudget = useMutation({
+    mutationFn: async ({ categoryId, limit }: { categoryId: string; limit: number }) => {
+      const response = await fetch('/api/budgets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryId, limit }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      toast.success('Budget added successfully');
+    },
+    onError: () => {
+      toast.error('Failed to add budget');
+    },
+  });
+
+  // Update budget mutation
+  const updateBudget = useMutation({
+    mutationFn: async ({ id, limit }: { id: string; limit: number }) => {
+      const response = await fetch('/api/budgets', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, limit }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      toast.success('Budget updated successfully');
+      setEditingBudget(null);
+    },
+    onError: () => {
+      toast.error('Failed to update budget');
+    },
+  });
+
+  // Delete budget mutation
+  const deleteBudget = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch('/api/budgets', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      toast.success('Budget removed successfully');
+    },
+    onError: () => {
+      toast.error('Failed to remove budget');
+    },
+  });
 
   const currentDate = new Date();
   const currentMonthTransactions = transactions.filter(
@@ -60,10 +130,8 @@ export default function BudgetPage() {
     return acc;
   }, {} as Record<string, number>);
 
-  const handleBudgetChange = (category: string, newLimit: string) => {
-    setBudgets((prev) =>
-      prev.map((b) => (b.category === category ? { ...b, limit: parseFloat(newLimit) || 0 } : b))
-    );
+  const handleBudgetChange = (budgetId: string, newLimit: string) => {
+    updateBudget.mutate({ id: budgetId, limit: parseFloat(newLimit) || 0 });
   };
 
   const calculateProgress = (spent: number, limit: number) => {
@@ -73,6 +141,11 @@ export default function BudgetPage() {
     return 'bg-red-500';
   };
 
+  // Get categories that don't have a budget yet
+  const availableCategories = categories.filter(
+    category => !budgets.some(budget => budget.categoryId === category.id)
+  );
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
@@ -80,6 +153,28 @@ export default function BudgetPage() {
         <p className="mt-2 text-gray-600">Set and track your monthly spending limits</p>
       </div>
 
+      {/* Add Budget Section */}
+      {availableCategories.length > 0 && (
+        <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Add Budget Category</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {availableCategories.map(category => (
+              <div key={category.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <span className="text-sm font-medium text-gray-900">{category.name}</span>
+                <button
+                  onClick={() => createBudget.mutate({ categoryId: category.id, limit: 5000 })}
+                  className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Budget
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Budget List */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Monthly Budgets</h2>
@@ -87,14 +182,14 @@ export default function BudgetPage() {
 
         <div className="divide-y divide-gray-200">
           {budgets.map((budget) => {
-            const spent = spendingByCategory[budget.category] || 0;
+            const spent = spendingByCategory[budget.category.name] || 0;
             const percentage = Math.min((spent / budget.limit) * 100, 100);
 
             return (
-              <div key={budget.category} className="px-6 py-4">
+              <div key={budget.id} className="px-6 py-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex-1">
-                    <h3 className="text-sm font-medium text-gray-900">{budget.category}</h3>
+                    <h3 className="text-sm font-medium text-gray-900">{budget.category.name}</h3>
                     <div className="flex items-center mt-1">
                       <span className="text-sm text-gray-500">
                         {formatCurrency(spent)} of {formatCurrency(budget.limit)}
@@ -104,24 +199,30 @@ export default function BudgetPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="ml-4">
-                    {editingCategory === budget.category ? (
+                  <div className="ml-4 flex items-center space-x-4">
+                    {editingBudget === budget.id ? (
                       <input
                         type="number"
                         value={budget.limit}
-                        onChange={(e) => handleBudgetChange(budget.category, e.target.value)}
-                        onBlur={() => setEditingCategory(null)}
+                        onChange={(e) => handleBudgetChange(budget.id, e.target.value)}
+                        onBlur={() => setEditingBudget(null)}
                         autoFocus
                         className="w-24 px-2 py-1 text-right border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     ) : (
                       <button
-                        onClick={() => setEditingCategory(budget.category)}
+                        onClick={() => setEditingBudget(budget.id)}
                         className="text-sm text-blue-600 hover:text-blue-800"
                       >
                         Edit
                       </button>
                     )}
+                    <button
+                      onClick={() => deleteBudget.mutate(budget.id)}
+                      className="text-sm text-red-600 hover:text-red-800"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
                 <div className="relative pt-1">

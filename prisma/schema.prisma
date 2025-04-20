@@ -27,4 +27,14 @@ model Category {
   descriptions String[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  budgets      Budget[]
+}
+
+model Budget {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  limit       Float
+  categoryId  String      @db.ObjectId
+  category    Category    @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 } 
