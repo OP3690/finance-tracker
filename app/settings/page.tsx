@@ -40,6 +40,9 @@ export default function SettingsPage() {
       }
       return response.json();
     },
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
   });
 
   const { data: transactions = [] } = useQuery({
@@ -97,12 +100,22 @@ export default function SettingsPage() {
       }
       return response.json();
     },
+    onMutate: async (newCategory) => {
+      await queryClient.cancelQueries({ queryKey: ['categories'] });
+      const previousCategories = queryClient.getQueryData(['categories']);
+      queryClient.setQueryData(['categories'], (old: Category[] = []) => [
+        ...old,
+        { id: 'temp', name: newCategory, descriptions: [] }
+      ]);
+      return { previousCategories };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setNewCategory('');
       toast.success('Category added successfully');
     },
-    onError: () => {
+    onError: (err, newCategory, context) => {
+      queryClient.setQueryData(['categories'], context?.previousCategories);
       toast.error('Failed to add category');
     },
   });
@@ -120,13 +133,26 @@ export default function SettingsPage() {
       }
       return response.json();
     },
+    onMutate: async (newDescription) => {
+      await queryClient.cancelQueries({ queryKey: ['categories'] });
+      const previousCategories = queryClient.getQueryData(['categories']);
+      queryClient.setQueryData(['categories'], (old: Category[] = []) => 
+        old.map(category => 
+          category.id === selectedCategory?.id
+            ? { ...category, descriptions: [...category.descriptions, newDescription] }
+            : category
+        )
+      );
+      return { previousCategories };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setNewDescription('');
       setIsAddingDescription(false);
       toast.success('Description added successfully');
     },
-    onError: () => {
+    onError: (err, newDescription, context) => {
+      queryClient.setQueryData(['categories'], context?.previousCategories);
       toast.error('Failed to add description');
     },
   });
@@ -167,12 +193,25 @@ export default function SettingsPage() {
       }
       return response.json();
     },
+    onMutate: async (description) => {
+      await queryClient.cancelQueries({ queryKey: ['categories'] });
+      const previousCategories = queryClient.getQueryData(['categories']);
+      queryClient.setQueryData(['categories'], (old: Category[] = []) => 
+        old.map(category => 
+          category.id === selectedCategory?.id
+            ? { ...category, descriptions: category.descriptions.filter(d => d !== description) }
+            : category
+        )
+      );
+      return { previousCategories };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setShowDeleteModal(null);
       toast.success('Description deleted successfully');
     },
-    onError: () => {
+    onError: (err, description, context) => {
+      queryClient.setQueryData(['categories'], context?.previousCategories);
       toast.error('Failed to delete description');
     },
   });
