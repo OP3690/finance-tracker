@@ -1,12 +1,6 @@
 {
-  "/_not-found": "app/_not-found.js",
-  "/analytics/page": "app/analytics/page.js",
-  "/budget/page": "app/budget/page.js",
-  "/api/categories/route": "app/api/categories/route.js",
-  "/categories/page": "app/categories/page.js",
   "/api/transactions/route": "app/api/transactions/route.js",
-  "/settings/page": "app/settings/page.js",
   "/page": "app/page.js",
-  "/api/transactions/[id]/route": "app/api/transactions/[id]/route.js",
+  "/api/categories/route": "app/api/categories/route.js",
   "/transactions/page": "app/transactions/page.js"
 }

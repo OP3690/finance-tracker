@@ -5,8 +5,5 @@
       "src": "package.json",
       "use": "@vercel/next"
     }
-  ],
-  "env": {
-    "DATABASE_URL": "mongodb+srv://omprakashutaha:Matrix$$02040@cluster0.jssi7jp.mongodb.net/finance-tracker?retryWrites=true&w=majority&appName=Cluster0"
-  }
+  ]
 } 
