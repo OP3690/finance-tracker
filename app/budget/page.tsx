@@ -42,6 +42,7 @@ const CATEGORY_ORDER = [
 
 export default function BudgetPage() {
   const [editingBudget, setEditingBudget] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState<string>('');
   const [showAddSection, setShowAddSection] = useState(true);
   const queryClient = useQueryClient();
 
@@ -330,23 +331,36 @@ export default function BudgetPage() {
                           type="text"
                           inputMode="numeric"
                           pattern="[0-9]*"
-                          value={budget.limit}
+                          value={editingValue}
                           onChange={(e) => {
                             const value = e.target.value.replace(/[^0-9]/g, '');
-                            handleBudgetChange(budget.id, value);
+                            setEditingValue(value);
                           }}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
+                              const value = parseFloat(editingValue);
+                              if (!isNaN(value) && value >= 0) {
+                                updateBudget.mutate({ id: budget.id, limit: value });
+                              }
                               setEditingBudget(null);
                             }
                           }}
-                          onBlur={() => setEditingBudget(null)}
+                          onBlur={() => {
+                            const value = parseFloat(editingValue);
+                            if (!isNaN(value) && value >= 0) {
+                              updateBudget.mutate({ id: budget.id, limit: value });
+                            }
+                            setEditingBudget(null);
+                          }}
                           autoFocus
                           className="w-32 px-3 py-1.5 text-right border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                         />
                       ) : (
                         <button
-                          onClick={() => setEditingBudget(budget.id)}
+                          onClick={() => {
+                            setEditingValue(budget.limit.toString());
+                            setEditingBudget(budget.id);
+                          }}
                           className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
                         >
                           <Pencil className="h-4 w-4 mr-1" />
