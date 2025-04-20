@@ -1,3 +1,5 @@
+'use client';
+
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
@@ -5,18 +7,40 @@ import Providers from './providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
+export const metadata = {
+  title: 'Expense Tracker',
+  description: 'Track your expenses and manage your finances',
+  icons: {
+    icon: [
+      {
+        url: '/favicon.ico',
+        sizes: 'any',
+      },
+      {
+        url: '/icon.png',
+        type: 'image/png',
+        sizes: '32x32',
+      },
+    ],
+  },
+};
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <title>Expense Tracker</title>
+        <link rel="icon" href="/icon.png" type="image/png" sizes="32x32" />
+      </head>
       <body className={`${inter.className} min-h-screen`}>
         <Providers>
-          <div className="container mx-auto px-4 py-8">
+          <div className="min-h-screen">
             <Navbar />
-            <main className="mt-8">
+            <main className="container mx-auto px-4 py-8">
               {children}
             </main>
           </div>
