@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
+import { X } from 'lucide-react';
 
 interface Transaction {
   id: string;
@@ -31,6 +32,7 @@ export default function UpdateTransactionModal({
   onClose,
   onSuccess,
 }: UpdateTransactionModalProps) {
+  const [isClosing, setIsClosing] = useState(false);
   const [formData, setFormData] = useState({
     date: format(new Date(transaction.date), 'yyyy-MM-dd'),
     category: transaction.category,
@@ -58,6 +60,14 @@ export default function UpdateTransactionModal({
     }
   }, [formData.category, categories]);
 
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      onClose();
+      setIsClosing(false);
+    }, 200);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -76,6 +86,7 @@ export default function UpdateTransactionModal({
 
       toast.success('Transaction updated successfully');
       onSuccess();
+      handleClose();
     } catch (error) {
       toast.error('Failed to update transaction');
     }
@@ -93,9 +104,17 @@ export default function UpdateTransactionModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full">
-        <h2 className="text-xl font-semibold mb-4">Update Transaction</h2>
+    <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`}>
+      <div className={`bg-white rounded-lg p-6 max-w-md w-full transform transition-all duration-200 ${isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">Update Transaction</h2>
+          <button
+            onClick={handleClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X size={24} />
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="date" className="block text-sm font-medium text-gray-700">
@@ -187,7 +206,7 @@ export default function UpdateTransactionModal({
           <div className="flex justify-end space-x-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel

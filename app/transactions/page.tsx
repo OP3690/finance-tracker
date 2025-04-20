@@ -544,9 +544,17 @@ export default function TransactionsPage() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
+        <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-200`}>
+          <div className={`bg-white rounded-lg p-6 max-w-md w-full transform transition-all duration-200`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Confirm Delete</h3>
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={24} />
+              </button>
+            </div>
             <p className="mb-4">Do you really want to delete the following record?</p>
             
             <div className="mb-4 space-y-2">
@@ -573,7 +581,7 @@ export default function TransactionsPage() {
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteConfirm(null)}
-                className="px-4 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 border border-yellow-300 rounded-md hover:bg-yellow-200"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 Cancel
               </button>
