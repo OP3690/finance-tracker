@@ -11,7 +11,7 @@
     "import-data": "ts-node scripts/import-data.ts",
     "import": "ts-node scripts/import-transactions.ts",
     "import-categories": "ts-node scripts/import-categories.ts",
-    "seed": "ts-node prisma/seed.ts",
+    "seed": "npx ts-node scripts/seed-categories.ts",
     "deploy": "./scripts/deploy.sh",
     "postinstall": "prisma generate"
   },
@@ -40,7 +40,7 @@
     "tailwind-merge": "^3.2.0"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^20.17.30",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.21",
@@ -50,6 +50,6 @@
     "prisma": "^5.10.2",
     "tailwindcss": "^3.4.17",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "typescript": "^5.8.3"
   }
 }
