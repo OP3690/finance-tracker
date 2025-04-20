@@ -34,6 +34,8 @@ export function CategoryPieChart({ transactions }: CategoryPieChartProps) {
 
     const categoryTotals = transactions.reduce((acc, transaction) => {
       const { category, amount } = transaction;
+      if (category === 'Income') return acc;
+      
       if (!acc[category]) {
         acc[category] = { name: category, value: 0, total: 0 };
       }
@@ -137,13 +139,24 @@ export function CategoryPieChart({ transactions }: CategoryPieChartProps) {
             verticalAlign="middle"
             wrapperStyle={{
               paddingLeft: '20px',
-              maxWidth: '180px'
+              maxWidth: '160px',
+              fontSize: '0.75rem'
             }}
-            formatter={(value, entry: any) => (
-              <span className="text-sm text-gray-700 truncate block" style={{ maxWidth: '150px' }}>
-                {value} ({entry.payload.percentage}%)
-              </span>
-            )}
+            formatter={(value, entry: any) => {
+              const label = `${value} (${entry.payload.percentage}%)`;
+              const fontSize = label.length > 20 ? '0.65rem' : '0.75rem';
+              return (
+                <span 
+                  className="text-gray-700 truncate block" 
+                  style={{ 
+                    maxWidth: '140px',
+                    fontSize
+                  }}
+                >
+                  {label}
+                </span>
+              );
+            }}
           />
         </PieChart>
       </ResponsiveContainer>
