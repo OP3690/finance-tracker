@@ -108,7 +108,11 @@ export default function Dashboard() {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-pulse text-primary">Loading...</div>
+      </div>
+    );
   }
 
   const totalIncome = (Array.isArray(transactions) ? transactions : [])
@@ -122,83 +126,83 @@ export default function Dashboard() {
   const balance = totalIncome - totalExpenses;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-4">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Dashboard</h1>
-        
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow-lg p-4 text-white">
-            <h3 className="text-lg font-semibold mb-2">Total Income</h3>
-            <p className="text-3xl font-bold">{formatCurrency(totalIncome)}</p>
-          </div>
-          <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-lg shadow-lg p-4 text-white">
-            <h3 className="text-lg font-semibold mb-2">Total Expenses</h3>
-            <p className="text-3xl font-bold">{formatCurrency(totalExpenses)}</p>
-          </div>
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg p-4 text-white">
-            <h3 className="text-lg font-semibold mb-2">Balance</h3>
-            <p className="text-3xl font-bold">{formatCurrency(balance)}</p>
-          </div>
+    <div className="space-y-8">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="card gradient-border p-6">
+          <h3 className="text-lg font-semibold text-foreground/80 mb-2">Total Income</h3>
+          <p className="text-3xl font-bold glow-text">{formatCurrency(totalIncome)}</p>
         </div>
-
-        {/* Key Figure Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-          <KeyFigureCard
-            title="Income (Salary)"
-            amount={getCurrentMonthIncome()}
-            icon={<FaMoneyBillWave className="text-blue-600" />}
-            bgColor="bg-gradient-to-r from-blue-500 to-blue-600"
-          />
-          <KeyFigureCard
-            title="Opening Balance"
-            amount={getOpeningBalance()}
-            icon={<FaPiggyBank className="text-green-600" />}
-            bgColor="bg-gradient-to-r from-green-500 to-green-600"
-          />
-          <KeyFigureCard
-            title="Investments"
-            amount={getCurrentMonthInvestments()}
-            icon={<FaChartLine className="text-purple-600" />}
-            bgColor="bg-gradient-to-r from-purple-500 to-purple-600"
-          />
-          <KeyFigureCard
-            title="Loan EMI Payments"
-            amount={getCurrentMonthEMIs()}
-            icon={<FaCreditCard className="text-red-600" />}
-            bgColor="bg-gradient-to-r from-red-500 to-red-600"
-          />
-          <KeyFigureCard
-            title="Household Expenses"
-            amount={getCurrentMonthHouseholdExpenses()}
-            icon={<FaHome className="text-orange-600" />}
-            bgColor="bg-gradient-to-r from-orange-500 to-orange-600"
-          />
+        <div className="card gradient-border p-6">
+          <h3 className="text-lg font-semibold text-foreground/80 mb-2">Total Expenses</h3>
+          <p className="text-3xl font-bold text-red-400">{formatCurrency(totalExpenses)}</p>
         </div>
+        <div className="card gradient-border p-6">
+          <h3 className="text-lg font-semibold text-foreground/80 mb-2">Balance</h3>
+          <p className={`text-3xl font-bold ${balance >= 0 ? 'glow-text' : 'text-red-400'}`}>
+            {formatCurrency(balance)}
+          </p>
+        </div>
+      </div>
 
-        {/* Summary Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden mb-4">
-          <h2 className="text-xl font-bold text-blue-600 p-4 bg-blue-50">Monthly Summary</h2>
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+      {/* Key Figure Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <KeyFigureCard
+          title="Income (Salary)"
+          amount={getCurrentMonthIncome()}
+          icon={<FaMoneyBillWave className="text-primary" />}
+          bgColor="bg-primary/10"
+        />
+        <KeyFigureCard
+          title="Opening Balance"
+          amount={getOpeningBalance()}
+          icon={<FaPiggyBank className="text-accent" />}
+          bgColor="bg-accent/10"
+        />
+        <KeyFigureCard
+          title="Investments"
+          amount={getCurrentMonthInvestments()}
+          icon={<FaChartLine className="text-secondary" />}
+          bgColor="bg-secondary/10"
+        />
+        <KeyFigureCard
+          title="Loan EMI Payments"
+          amount={getCurrentMonthEMIs()}
+          icon={<FaCreditCard className="text-red-400" />}
+          bgColor="bg-red-400/10"
+        />
+        <KeyFigureCard
+          title="Household Expenses"
+          amount={getCurrentMonthHouseholdExpenses()}
+          icon={<FaHome className="text-orange-400" />}
+          bgColor="bg-orange-400/10"
+        />
+      </div>
+
+      {/* Summary Table */}
+      <div className="card overflow-hidden">
+        <h2 className="text-xl font-bold text-primary p-4 bg-card/50">Monthly Summary</h2>
+        <div className="table-container">
+          <table className="min-w-full divide-y divide-border/20">
+            <thead className="table-header">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                   Category
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
                   Today
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
                   {format(currentMonth, 'MMM-yy')}
                 </th>
                 {previousMonths.map((month, index) => (
-                  <th key={index} className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th key={index} className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
                     {format(month, 'MMM-yy')}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-border/20">
               {['Income', 'Groceries', 'Healthcare', 'Transportation', 'Investment', 'Insurance', 'Recharge/Bill/EMI Payment', 'Other Expenses'].map((category) => (
                 <tr key={category} className={category === 'Investment' ? 'bg-green-50' : ''}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -268,34 +272,34 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
+      </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-          <div className="bg-white rounded-lg shadow-lg p-4 h-[400px]">
-            <h2 className="text-xl font-semibold mb-4">Spending by Category</h2>
-            <div className="h-[300px]">
-              <CategoryPieChart transactions={transactions} />
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-lg p-4 h-[400px]">
-            <h2 className="text-xl font-semibold mb-4">Daily Spending Trend</h2>
-            <div className="h-[300px]">
-              <DailySpendChart transactions={transactions} />
-            </div>
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="card p-6">
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Spending by Category</h2>
+          <div className="h-[300px]">
+            <CategoryPieChart transactions={transactions} />
           </div>
         </div>
-
-        {/* Floating Action Button */}
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="fixed bottom-8 right-8 bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-full shadow-lg hover:from-purple-600 hover:to-purple-700 transition-colors"
-        >
-          <Plus size={24} />
-        </button>
-
-        {/* Add Transaction Modal */}
-        <AddTransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+        <div className="card p-6">
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Daily Spending Trend</h2>
+          <div className="h-[300px]">
+            <DailySpendChart transactions={transactions} />
+          </div>
+        </div>
       </div>
+
+      {/* Floating Action Button */}
+      <button
+        onClick={() => setIsModalOpen(true)}
+        className="fixed bottom-8 right-8 btn-primary rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-200"
+      >
+        <Plus size={24} />
+      </button>
+
+      {/* Add Transaction Modal */}
+      <AddTransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 } 

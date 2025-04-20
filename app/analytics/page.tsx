@@ -2,13 +2,13 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { format, subMonths } from 'date-fns';
 import { FaMoneyBillWave, FaPiggyBank, FaChartLine } from 'react-icons/fa';
 import KeyFigureCard from '@/components/KeyFigureCard';
-import CategoryPieChart from '@/components/CategoryPieChart';
 import DailySpendChart from '@/components/DailySpendChart';
 import { formatCurrency } from '@/utils/helpers';
 import { DetailedSummary } from '@/components/DetailedSummary';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface Transaction {
   id: string;
@@ -27,20 +27,45 @@ export default function AnalyticsPage() {
       if (!response.ok) {
         throw new Error('Failed to fetch transactions');
       }
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
+      return response.json();
     },
   });
 
-  const totalIncome = (Array.isArray(transactions) ? transactions : [])
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-pulse text-primary">Loading...</div>
+      </div>
+    );
+  }
+
+  const totalIncome = transactions
     .filter((t) => t.category.toLowerCase() === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const totalExpenses = (Array.isArray(transactions) ? transactions : [])
+  const totalExpenses = transactions
     .filter((t) => t.category.toLowerCase() !== 'income')
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
   const balance = totalIncome - totalExpenses;
+
+  // Calculate 3-month average spending
+  const threeMonthsAgo = subMonths(new Date(), 3);
+  const monthlyAverages = Array.from({ length: 3 }, (_, i) => {
+    const month = subMonths(new Date(), i);
+    const monthTransactions = transactions.filter(t => {
+      const date = new Date(t.date);
+      return date.getMonth() === month.getMonth() && 
+             date.getFullYear() === month.getFullYear() &&
+             t.category.toLowerCase() !== 'income' &&
+             t.category.toLowerCase() !== 'investment';
+    });
+    const total = monthTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    return {
+      month: format(month, 'MMM yyyy'),
+      average: total / monthTransactions.length || 0
+    };
+  }).reverse();
 
   const stats = [
     { name: 'Total Income', amount: totalIncome, color: 'text-green-600' },
@@ -55,12 +80,22 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
-        <p className="mt-2 text-gray-600">Analyze your financial data and trends</p>
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-8">Analytics</h1>
+      
+      {/* Monthly Averages */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        {monthlyAverages.map(({ month, average }) => (
+          <div key={month} className="bg-white p-6 rounded-lg border border-gray-200">
+            <dt className="text-sm font-medium text-gray-500">Daily Avg. Spent ({month})</dt>
+            <dd className="mt-1 text-3xl font-semibold text-primary">
+              {formatCurrency(average)}
+            </dd>
+          </div>
+        ))}
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => (
           <div key={stat.name} className="bg-white p-6 rounded-lg border border-gray-200">
@@ -74,9 +109,12 @@ export default function AnalyticsPage() {
         ))}
       </div>
 
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <h2 className="text-xl font-semibold mb-4">Detailed Summary</h2>
-        <DetailedSummary />
+      {/* Detailed Summary */}
+      <div className="space-y-8">
+        <div className="glass-effect rounded-xl p-6">
+          <h2 className="text-2xl font-bold mb-6">Detailed Summary</h2>
+          <DetailedSummary />
+        </div>
       </div>
     </div>
   );

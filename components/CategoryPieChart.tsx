@@ -1,7 +1,6 @@
 'use client';
 
-import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { formatCurrency } from '@/utils/helpers';
 
 interface Transaction {
@@ -17,89 +16,86 @@ interface CategoryPieChartProps {
   transactions: Transaction[];
 }
 
-export const CategoryPieChart = ({ transactions }: CategoryPieChartProps) => {
-  if (!Array.isArray(transactions) || transactions.length === 0) {
-    return <div className="text-center p-4">No transactions to display</div>;
-  }
+const COLORS = [
+  '#3b82f6', // blue-500
+  '#8b5cf6', // violet-500
+  '#10b981', // emerald-500
+  '#f59e0b', // amber-500
+  '#ef4444', // red-500
+  '#06b6d4', // cyan-500
+  '#d946ef', // fuchsia-500
+  '#84cc16', // lime-500
+];
 
-  const categoryTotals = (Array.isArray(transactions) ? transactions : [])
-    .filter(t => t.category !== 'Income')
-    .reduce((acc, transaction) => {
-      const { category, amount } = transaction;
-      acc[category] = (acc[category] || 0) + amount;
-      return acc;
-    }, {} as Record<string, number>);
+export default function CategoryPieChart({ transactions }: CategoryPieChartProps) {
+  const categoryTotals = transactions.reduce((acc, transaction) => {
+    if (transaction.category === 'Income') return acc;
+    acc[transaction.category] = (acc[transaction.category] || 0) + Math.abs(transaction.amount);
+    return acc;
+  }, {} as Record<string, number>);
 
-  const data = Object.entries(categoryTotals).map(([name, value]) => ({
-    name,
-    value: Math.abs(value),
+  const data = Object.entries(categoryTotals)
+    .map(([name, value]) => ({
+      name,
+      value,
+    }))
+    .sort((a, b) => b.value - a.value);
+
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  const dataWithPercentage = data.map(item => ({
+    ...item,
+    percentage: (item.value / total) * 100
   }));
 
-  const COLORS = [
-    '#0088FE', // Blue
-    '#00C49F', // Teal
-    '#FFBB28', // Yellow
-    '#FF8042', // Orange
-    '#8884D8', // Purple
-    '#82CA9D', // Green
-    '#FFC658', // Light Orange
-    '#FF7C43', // Coral
-    '#A4DE6C', // Light Green
-    '#D0ED57'  // Lime
-  ];
-
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }: any) => {
-    const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
+  if (data.length === 0) {
     return (
-      <text
-        x={x}
-        y={y}
-        fill="#333"
-        textAnchor={x > cx ? 'start' : 'end'}
-        dominantBaseline="central"
-        style={{ fontSize: '10px' }}
-      >
-        {`${name.substring(0, 15)}${name.length > 15 ? '...' : ''} (${(percent * 100).toFixed(0)}%)`}
-      </text>
+      <div className="flex items-center justify-center h-full">
+        <p className="text-foreground/50">No transactions to display</p>
+      </div>
     );
-  };
+  }
 
   return (
-    <div className="h-[500px] w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            cx="60%"
-            cy="30%"
-            labelLine={false}
-            outerRadius={120}
-            fill="#8884d8"
-            dataKey="value"
-            label={renderCustomizedLabel}
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip 
-            formatter={(value: number) => formatCurrency(value)}
-            contentStyle={{ fontSize: '12px' }}
-          />
-          <Legend 
-            layout="vertical" 
-            align="right" 
-            verticalAlign="middle"
-            wrapperStyle={{ fontSize: '12px' }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie
+          data={dataWithPercentage}
+          cx="50%"
+          cy="50%"
+          innerRadius={60}
+          outerRadius={80}
+          paddingAngle={5}
+          dataKey="value"
+        >
+          {dataWithPercentage.map((entry, index) => (
+            <Cell
+              key={`cell-${index}`}
+              fill={COLORS[index % COLORS.length]}
+              stroke="var(--card)"
+              strokeWidth={2}
+            />
+          ))}
+        </Pie>
+        <Tooltip
+          content={({ active, payload }) => {
+            if (active && payload && payload.length) {
+              const data = payload[0].payload;
+              return (
+                <div className="bg-white p-4 rounded-lg shadow-lg">
+                  <p className="font-semibold">{data.name}</p>
+                  <p className="text-sm text-gray-600">
+                    Amount: {formatCurrency(data.value)}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Percentage: {data.percentage.toFixed(2)}%
+                  </p>
+                </div>
+              );
+            }
+            return null;
+          }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
   );
-};
-
-export default CategoryPieChart; 
+} 

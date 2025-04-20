@@ -1,12 +1,9 @@
-'use client';
-
 import { Inter } from 'next/font/google';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import Navbar from '@/components/Navbar';
 import './globals.css';
+import Navbar from '@/components/Navbar';
+import Providers from './providers';
 
 const inter = Inter({ subsets: ['latin'] });
-const queryClient = new QueryClient();
 
 export default function RootLayout({
   children,
@@ -15,15 +12,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <QueryClientProvider client={queryClient}>
-          <div className="min-h-screen bg-gray-50">
+      <body className={`${inter.className} min-h-screen`}>
+        <Providers>
+          <div className="container mx-auto px-4 py-8">
             <Navbar />
-            <main className="container mx-auto px-4 py-8">
+            <main className="mt-8">
               {children}
             </main>
           </div>
-        </QueryClientProvider>
+        </Providers>
       </body>
     </html>
   );

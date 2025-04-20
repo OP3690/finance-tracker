@@ -9,16 +9,22 @@ interface KeyFigureCardProps {
   bgColor?: string;
 }
 
-export default function KeyFigureCard({ title, amount, icon, bgColor = 'bg-gradient-to-r from-blue-500 to-blue-600' }: KeyFigureCardProps) {
+export default function KeyFigureCard({ title, amount, icon, bgColor = 'bg-primary/10' }: KeyFigureCardProps) {
   const currentMonth = format(new Date(), 'MMM yyyy');
   
   return (
-    <div className={`${bgColor} rounded-lg shadow-lg p-4 text-white`}>
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium">{title}</h3>
-        {icon}
+    <div className={`card ${bgColor} p-4`}>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-foreground/70">{title}</p>
+          <p className="text-2xl font-bold text-foreground mt-1">
+            {amount >= 0 ? formatCurrency(amount) : `-${formatCurrency(Math.abs(amount))}`}
+          </p>
+        </div>
+        <div className="p-3 rounded-full bg-white/10">
+          {icon}
+        </div>
       </div>
-      <p className="text-2xl font-bold">{formatCurrency(amount)}</p>
     </div>
   );
 } 
