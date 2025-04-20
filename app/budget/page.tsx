@@ -145,7 +145,10 @@ export default function BudgetPage() {
   }, {} as Record<string, number>);
 
   const handleBudgetChange = (budgetId: string, newLimit: string) => {
-    updateBudget.mutate({ id: budgetId, limit: parseFloat(newLimit) || 0 });
+    const value = parseFloat(newLimit);
+    if (!isNaN(value) && value >= 0) {
+      updateBudget.mutate({ id: budgetId, limit: value });
+    }
   };
 
   const calculateProgress = (spent: number, limit: number) => {
@@ -324,9 +327,19 @@ export default function BudgetPage() {
                         <motion.input
                           initial={{ scale: 0.95 }}
                           animate={{ scale: 1 }}
-                          type="number"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           value={budget.limit}
-                          onChange={(e) => handleBudgetChange(budget.id, e.target.value)}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[^0-9]/g, '');
+                            handleBudgetChange(budget.id, value);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              setEditingBudget(null);
+                            }
+                          }}
                           onBlur={() => setEditingBudget(null)}
                           autoFocus
                           className="w-32 px-3 py-1.5 text-right border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
