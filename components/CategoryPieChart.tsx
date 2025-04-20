@@ -1,101 +1,148 @@
 'use client';
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { useMemo } from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { formatCurrency } from '@/utils/helpers';
 
 interface Transaction {
   id: string;
-  date: string;
   category: string;
-  description: string;
   amount: number;
-  comment?: string;
 }
 
 interface CategoryPieChartProps {
   transactions: Transaction[];
 }
 
-const COLORS = [
-  '#3b82f6', // blue-500
-  '#8b5cf6', // violet-500
-  '#10b981', // emerald-500
-  '#f59e0b', // amber-500
-  '#ef4444', // red-500
-  '#06b6d4', // cyan-500
-  '#d946ef', // fuchsia-500
-  '#84cc16', // lime-500
-];
+const COLORS = {
+  'Income': '#22c55e',      // Green
+  'Investment': '#0ea5e9',  // Blue
+  'Groceries': '#f97316',   // Orange
+  'Healthcare': '#ec4899',  // Pink
+  'Transportation': '#8b5cf6', // Purple
+  'Insurance': '#06b6d4',   // Cyan
+  'Other Expenses': '#64748b', // Slate
+  'Cloths': '#eab308',      // Yellow
+  'Education - Books': '#6366f1', // Indigo
+};
+
+const defaultColor = '#94a3b8'; // Slate-400
 
 export function CategoryPieChart({ transactions }: CategoryPieChartProps) {
-  const categoryTotals = transactions.reduce((acc, transaction) => {
-    if (transaction.category === 'Income') return acc;
-    acc[transaction.category] = (acc[transaction.category] || 0) + Math.abs(transaction.amount);
-    return acc;
-  }, {} as Record<string, number>);
+  const data = useMemo(() => {
+    if (!transactions.length) return [];
 
-  const data = Object.entries(categoryTotals)
-    .map(([name, value]) => ({
-      name,
-      value,
-    }))
-    .sort((a, b) => b.value - a.value);
+    const categoryTotals = transactions.reduce((acc, transaction) => {
+      const { category, amount } = transaction;
+      if (!acc[category]) {
+        acc[category] = { name: category, value: 0, total: 0 };
+      }
+      acc[category].value += Math.abs(amount);
+      acc[category].total += amount;
+      return acc;
+    }, {} as Record<string, { name: string; value: number; total: number }>);
 
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-  const dataWithPercentage = data.map(item => ({
-    ...item,
-    percentage: (item.value / total) * 100
-  }));
+    const totalSpending = Object.values(categoryTotals).reduce((sum, cat) => sum + cat.value, 0);
 
-  if (data.length === 0) {
+    return Object.values(categoryTotals)
+      .map(category => ({
+        ...category,
+        percentage: ((category.value / totalSpending) * 100).toFixed(1)
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [transactions]);
+
+  if (!transactions.length) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-foreground/50">No transactions to display</p>
+      <div className="flex items-center justify-center h-[300px] bg-gray-50 rounded-lg border border-gray-200">
+        <p className="text-gray-500">No transactions to display</p>
       </div>
     );
   }
 
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.[0]) return null;
+
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
+        <p className="font-semibold text-gray-900">{data.name}</p>
+        <p className="text-gray-600">
+          Amount: {formatCurrency(data.total)}
+        </p>
+        <p className="text-gray-600">
+          Percentage: {data.percentage}%
+        </p>
+      </div>
+    );
+  };
+
+  const renderCustomizedLabel = ({
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+    percent,
+    name,
+  }: any) => {
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    if (percent < 0.05) return null; // Don't show labels for small segments
+
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="white"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        className="text-xs font-medium"
+      >
+        {`${(percent * 100).toFixed(1)}%`}
+      </text>
+    );
+  };
+
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie
-          data={dataWithPercentage}
-          cx="50%"
-          cy="50%"
-          innerRadius={60}
-          outerRadius={80}
-          paddingAngle={5}
-          dataKey="value"
-        >
-          {dataWithPercentage.map((entry, index) => (
-            <Cell
-              key={`cell-${index}`}
-              fill={COLORS[index % COLORS.length]}
-              stroke="var(--card)"
-              strokeWidth={2}
-            />
-          ))}
-        </Pie>
-        <Tooltip
-          content={({ active, payload }) => {
-            if (active && payload && payload.length) {
-              const data = payload[0].payload;
-              return (
-                <div className="bg-white p-4 rounded-lg shadow-lg">
-                  <p className="font-semibold">{data.name}</p>
-                  <p className="text-sm text-gray-600">
-                    Amount: {formatCurrency(data.value)}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Percentage: {data.percentage.toFixed(2)}%
-                  </p>
-                </div>
-              );
-            }
-            return null;
-          }}
-        />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="w-full h-[400px] p-4">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            label={renderCustomizedLabel}
+            outerRadius={150}
+            innerRadius={75}
+            paddingAngle={1}
+            dataKey="value"
+          >
+            {data.map((entry, index) => (
+              <Cell 
+                key={`cell-${index}`} 
+                fill={COLORS[entry.name as keyof typeof COLORS] || defaultColor}
+                className="hover:opacity-80 transition-opacity duration-200"
+              />
+            ))}
+          </Pie>
+          <Tooltip content={<CustomTooltip />} />
+          <Legend 
+            layout="vertical" 
+            align="right" 
+            verticalAlign="middle"
+            formatter={(value, entry: any) => (
+              <span className="text-sm text-gray-700">
+                {value} ({entry.payload.percentage}%)
+              </span>
+            )}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
   );
 } 
