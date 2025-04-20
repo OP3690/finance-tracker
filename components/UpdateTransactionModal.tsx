@@ -47,6 +47,17 @@ export default function UpdateTransactionModal({
     },
   });
 
+  const [descriptions, setDescriptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (formData.category) {
+      const selectedCategory = categories.find(cat => cat.name === formData.category);
+      setDescriptions(selectedCategory?.descriptions || []);
+    } else {
+      setDescriptions([]);
+    }
+  }, [formData.category, categories]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -74,7 +85,11 @@ export default function UpdateTransactionModal({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'category') {
+      setFormData((prev) => ({ ...prev, [name]: value, description: '' }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   return (
@@ -109,6 +124,7 @@ export default function UpdateTransactionModal({
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               required
             >
+              <option value="">Select a category</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.name}>
                   {category.name}
@@ -121,15 +137,21 @@ export default function UpdateTransactionModal({
             <label htmlFor="description" className="block text-sm font-medium text-gray-700">
               Description
             </label>
-            <input
-              type="text"
+            <select
               id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               required
-            />
+            >
+              <option value="">Select a description</option>
+              {descriptions.map((desc) => (
+                <option key={desc} value={desc}>
+                  {desc}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>

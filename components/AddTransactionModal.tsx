@@ -3,22 +3,18 @@
 import { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
 import { X } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+
+interface Category {
+  id: string;
+  name: string;
+  descriptions: string[];
+}
 
 interface AddTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-const CATEGORY_DESCRIPTIONS = {
-  'Income': ['Salary', 'Bonus', 'Interest', 'Dividend', 'Other Income'],
-  'Groceries': ['Eggs', 'Chicken', 'Meat', 'Vegetables', 'Fruits', 'Dairy', 'Snacks', 'Beverages'],
-  'Transportation': ['Taxi', 'Train Fare', 'Fuel', 'Parking', 'Maintenance'],
-  'Healthcare': ['Medicine', 'Doctor Visit', 'Hospital Bill', 'Health Checkup'],
-  'Insurance': ['Health Insurance', 'Car Insurance', 'Home Insurance', 'Life Insurance'],
-  'Investment': ['Mutual Funds', 'Stocks', 'Real Estate', 'Fixed Deposit'],
-  'Recharge/Bill/EMI Payment': ['Electricity', 'Wifi-Internet', 'Mobile Recharge', 'Loan EMI', 'Subscription'],
-  'Other Expenses': ['Repair - Electronics', 'Travel', 'Gifts', 'Entertainment']
-};
 
 export default function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProps) {
   const [formData, setFormData] = useState({
@@ -29,15 +25,27 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
     comment: '',
   });
 
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const response = await fetch('/api/categories');
+      if (!response.ok) {
+        throw new Error('Failed to fetch categories');
+      }
+      return response.json();
+    },
+  });
+
   const [descriptions, setDescriptions] = useState<string[]>([]);
 
   useEffect(() => {
     if (formData.category) {
-      setDescriptions(CATEGORY_DESCRIPTIONS[formData.category as keyof typeof CATEGORY_DESCRIPTIONS] || []);
+      const selectedCategory = categories.find(cat => cat.name === formData.category);
+      setDescriptions(selectedCategory?.descriptions || []);
     } else {
       setDescriptions([]);
     }
-  }, [formData.category]);
+  }, [formData.category, categories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,9 +115,9 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                 required
               >
                 <option value="">Select a category</option>
-                {Object.keys(CATEGORY_DESCRIPTIONS).map((category) => (
-                  <option key={category} value={category}>
-                    {category}
+                {categories.map((category) => (
+                  <option key={category.id} value={category.name}>
+                    {category.name}
                   </option>
                 ))}
               </select>
