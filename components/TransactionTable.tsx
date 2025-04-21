@@ -33,6 +33,12 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  const isToday = (date: string) => {
+    const transactionDate = new Date(date);
+    transactionDate.setHours(0, 0, 0, 0);
+    return transactionDate.getTime() === today.getTime();
+  };
+
   const handleUpdateClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
     setIsUpdateModalOpen(true);
@@ -136,17 +142,16 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {currentTransactions.map((transaction) => {
-              const transactionDate = new Date(transaction.date);
-              transactionDate.setHours(0, 0, 0, 0);
-              const isToday = transactionDate.getTime() === today.getTime();
-
               return (
                 <tr 
                   key={transaction.id}
-                  className={isToday ? 'bg-green-50' : ''}
+                  className={isToday(transaction.date) ? 'bg-green-50' : ''}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatDate(new Date(transaction.date))}
+                    {isToday(transaction.date) && (
+                      <span className="ml-2 text-xs text-green-600 font-medium">New</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {transaction.category}
