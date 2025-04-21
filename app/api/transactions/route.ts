@@ -70,6 +70,7 @@ export async function POST(request: Request) {
         description: data.description,
         amount: Number(data.amount),
         comment: data.comment || undefined,
+        createdAt: new Date(),
       },
       select: {
         id: true,
