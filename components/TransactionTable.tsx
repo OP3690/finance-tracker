@@ -48,10 +48,11 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
     const created = new Date(createdAt);
     
     // Compare only the date parts (year, month, day)
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const createdDate = new Date(created.getFullYear(), created.getMonth(), created.getDate());
-    
-    return today.getTime() === createdDate.getTime();
+    return (
+      created.getFullYear() === now.getFullYear() &&
+      created.getMonth() === now.getMonth() &&
+      created.getDate() === now.getDate()
+    );
   };
 
   const handleUpdateClick = (transaction: Transaction) => {
@@ -161,17 +162,12 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
                 <tr 
                   key={transaction.id}
                   className={`${
-                    isCreatedToday(transaction.createdAt) ? 'bg-[#e8fbe8] dark:bg-[#1a3d1a]' : ''
+                    isCreatedToday(transaction.createdAt) ? 'bg-[#e8fbe8]' : ''
                   } hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                     <div className="flex items-center">
                       <span>{formatDate(new Date(transaction.date))}</span>
-                      {isCreatedToday(transaction.createdAt) && (
-                        <span className="ml-1 text-xs italic">
-                          New
-                        </span>
-                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
