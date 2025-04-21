@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { formatCurrency, formatDate } from '@/utils/helpers';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit2 } from 'lucide-react';
 import UpdateTransactionModal from './UpdateTransactionModal';
@@ -31,22 +31,16 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
   const endIndex = startIndex + itemsPerPage;
   const currentTransactions = transactions.slice(startIndex, endIndex);
 
-  // Get current system date at render time (server time)
-  const today = useMemo(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  }, []);
-
-  // Check if a transaction was created today
-  const isCreatedToday = (transaction: Transaction): boolean => {
-    if (!transaction.createdAt) return false;
-    const createdAt = new Date(transaction.createdAt);
-    const createdDate = new Date(
-      createdAt.getFullYear(),
-      createdAt.getMonth(),
-      createdAt.getDate()
-    );
-    return createdDate.getTime() === today.getTime();
+  const isCreatedToday = (createdAt: string): boolean => {
+    if (!createdAt) return false;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const created = new Date(createdAt);
+    created.setHours(0, 0, 0, 0);
+    
+    return today.getTime() === created.getTime();
   };
 
   const handleUpdateClick = (transaction: Transaction) => {
@@ -152,18 +146,23 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {currentTransactions.map((transaction) => {
-              const wasCreatedToday = isCreatedToday(transaction);
+              const wasCreatedToday = isCreatedToday(transaction.createdAt);
+              console.log('Transaction:', {
+                id: transaction.id,
+                createdAt: transaction.createdAt,
+                wasCreatedToday
+              });
 
               return (
                 <tr 
                   key={transaction.id}
-                  className={`${wasCreatedToday ? 'row-new bg-green-50' : ''} hover:bg-gray-50 transition-colors duration-150`}
+                  className={`${wasCreatedToday ? 'bg-green-50' : ''} hover:bg-gray-50/80 transition-colors duration-150`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div className="flex items-center gap-2">
                       {formatDate(new Date(transaction.date))}
                       {wasCreatedToday && (
-                        <span className="flag-new text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                           New
                         </span>
                       )}
@@ -174,6 +173,9 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {transaction.description}
+                    {transaction.comment && (
+                      <span className="ml-2 text-gray-500">({transaction.comment})</span>
+                    )}
                   </td>
                   <td className={`px-6 py-4 whitespace-nowrap text-sm text-right ${
                     transaction.category === 'Investment' ? 'text-green-800 font-semibold' : 'text-gray-900'
@@ -183,7 +185,7 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                     <button
                       onClick={() => handleUpdateClick(transaction)}
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-blue-600 hover:text-blue-800 transition-colors duration-150"
                     >
                       <Edit2 size={16} />
                     </button>

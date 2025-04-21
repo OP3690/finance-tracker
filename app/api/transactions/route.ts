@@ -39,7 +39,7 @@ export async function GET(request: Request) {
       },
     });
 
-    console.log(`Found ${transactions.length} transactions`);
+    console.log('Fetched transactions:', transactions);
     return NextResponse.json(transactions);
   } catch (error: any) {
     console.error('Failed to fetch transactions:', error);
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    console.log('Creating new transaction...', { data });
+    console.log('Creating new transaction:', data);
 
     // Validate required fields
     if (!data.date || !data.category || !data.description || data.amount === undefined) {
@@ -63,6 +63,7 @@ export async function POST(request: Request) {
       );
     }
 
+    const now = new Date();
     const transaction = await prisma.transaction.create({
       data: {
         date: new Date(data.date),
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
         description: data.description,
         amount: Number(data.amount),
         comment: data.comment || undefined,
-        createdAt: new Date(),
+        createdAt: now,
       },
       select: {
         id: true,
@@ -83,6 +84,7 @@ export async function POST(request: Request) {
       },
     });
 
+    console.log('Created transaction:', transaction);
     return NextResponse.json(transaction);
   } catch (error: any) {
     console.error('Failed to create transaction:', error);
