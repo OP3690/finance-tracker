@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { formatCurrency, formatDate } from '@/utils/helpers';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit2 } from 'lucide-react';
 import UpdateTransactionModal from './UpdateTransactionModal';
@@ -31,13 +31,21 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
   const endIndex = startIndex + itemsPerPage;
   const currentTransactions = transactions.slice(startIndex, endIndex);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Get current system date at render time (server time)
+  const today = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }, []);
 
-  const isCreatedToday = (transaction: Transaction) => {
+  // Check if a transaction was created today
+  const isCreatedToday = (transaction: Transaction): boolean => {
     if (!transaction.createdAt) return false;
-    const createdDate = new Date(transaction.createdAt);
-    createdDate.setHours(0, 0, 0, 0);
+    const createdAt = new Date(transaction.createdAt);
+    const createdDate = new Date(
+      createdAt.getFullYear(),
+      createdAt.getMonth(),
+      createdAt.getDate()
+    );
     return createdDate.getTime() === today.getTime();
   };
 
@@ -149,13 +157,13 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
               return (
                 <tr 
                   key={transaction.id}
-                  className={`${wasCreatedToday ? 'bg-green-50' : ''} hover:bg-gray-50 transition-colors duration-150`}
+                  className={`${wasCreatedToday ? 'row-new bg-green-50' : ''} hover:bg-gray-50 transition-colors duration-150`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div className="flex items-center gap-2">
                       {formatDate(new Date(transaction.date))}
                       {wasCreatedToday && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
+                        <span className="flag-new text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
                           New
                         </span>
                       )}
