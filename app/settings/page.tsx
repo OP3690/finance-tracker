@@ -34,6 +34,7 @@ export default function SettingsPage() {
     category: Category;
     transactionCount: number;
   } | null>(null);
+  const [editingCategory, setEditingCategory] = useState<{ id: string; name: string } | null>(null);
   const queryClient = useQueryClient();
 
   const { data: categories = [], isLoading } = useQuery<Category[]>({
@@ -260,6 +261,28 @@ export default function SettingsPage() {
     },
   });
 
+  const updateCategoryMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const response = await fetch('/api/categories', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, name }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update category');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      setEditingCategory(null);
+      toast.success('Category updated successfully');
+    },
+    onError: () => {
+      toast.error('Failed to update category');
+    },
+  });
+
   const handleDeleteClick = (description: string) => {
     const usage = descriptionUsage.find(item => item.description === description);
     setShowDeleteModal({
@@ -347,23 +370,68 @@ export default function SettingsPage() {
                     }}
                   >
                     <div className="flex items-center">
-                      <span className="text-sm font-medium text-gray-900">{category.name}</span>
-                      <span className="ml-2 text-xs text-gray-500">
-                        ({category.descriptions.length} descriptions)
-                      </span>
+                      {editingCategory?.id === category.id ? (
+                        <input
+                          type="text"
+                          value={editingCategory.name}
+                          onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && editingCategory.name.trim()) {
+                              updateCategoryMutation.mutate({
+                                id: editingCategory.id,
+                                name: editingCategory.name.trim()
+                              });
+                            } else if (e.key === 'Escape') {
+                              setEditingCategory(null);
+                            }
+                          }}
+                          onBlur={() => {
+                            if (editingCategory.name.trim()) {
+                              updateCategoryMutation.mutate({
+                                id: editingCategory.id,
+                                name: editingCategory.name.trim()
+                              });
+                            }
+                            setEditingCategory(null);
+                          }}
+                          className="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          autoFocus
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <>
+                          <span className="text-sm font-medium text-gray-900">{category.name}</span>
+                          <span className="ml-2 text-xs text-gray-500">
+                            ({category.descriptions.length} descriptions)
+                          </span>
+                        </>
+                      )}
                     </div>
                   </button>
-                  {!['Income', 'Investment'].includes(category.name) && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteCategoryClick(category);
-                      }}
-                      className="ml-4 p-2 text-gray-400 hover:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    {!['Income', 'Investment'].includes(category.name) && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingCategory({ id: category.id, name: category.name });
+                          }}
+                          className="p-2 text-gray-400 hover:text-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCategoryClick(category);
+                          }}
+                          className="p-2 text-gray-400 hover:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             ))}
