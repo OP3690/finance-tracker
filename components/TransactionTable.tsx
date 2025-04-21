@@ -47,12 +47,10 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
     const now = new Date();
     const created = new Date(createdAt);
     
-    // Compare only the date parts (year, month, day)
-    return (
-      created.getFullYear() === now.getFullYear() &&
-      created.getMonth() === now.getMonth() &&
-      created.getDate() === now.getDate()
-    );
+    const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const createdDate = new Date(created.getFullYear(), created.getMonth(), created.getDate());
+    
+    return nowDate.getTime() === createdDate.getTime();
   };
 
   const handleUpdateClick = (transaction: Transaction) => {
