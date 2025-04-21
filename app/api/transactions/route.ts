@@ -27,6 +27,15 @@ export async function GET(request: Request) {
       orderBy: {
         date: 'desc',
       },
+      select: {
+        id: true,
+        date: true,
+        category: true,
+        description: true,
+        amount: true,
+        comment: true,
+        createdAt: true,
+      },
     });
 
     console.log(`Found ${transactions.length} transactions`);
@@ -34,7 +43,7 @@ export async function GET(request: Request) {
   } catch (error: any) {
     console.error('Failed to fetch transactions:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch transactions', details: error?.message || String(error) },
+      { error: 'Failed to fetch transactions' },
       { status: 500 }
     );
   }
@@ -61,11 +70,20 @@ export async function POST(request: Request) {
         amount: Number(data.amount),
         comment: data.comment || undefined,
       },
+      select: {
+        id: true,
+        date: true,
+        category: true,
+        description: true,
+        amount: true,
+        comment: true,
+        createdAt: true,
+      },
     });
 
     return NextResponse.json(transaction);
   } catch (error: any) {
-    console.error('Failed to create transaction.', error);
+    console.error('Failed to create transaction:', error);
     
     // Handle specific database errors
     if (error.code === 'P1001' || error.code === 'P1017') {

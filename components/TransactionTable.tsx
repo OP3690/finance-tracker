@@ -35,12 +35,10 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
   today.setHours(0, 0, 0, 0);
 
   const isCreatedToday = (transaction: Transaction) => {
+    if (!transaction.createdAt) return false;
     const createdDate = new Date(transaction.createdAt);
-    return (
-      createdDate.getDate() === today.getDate() &&
-      createdDate.getMonth() === today.getMonth() &&
-      createdDate.getFullYear() === today.getFullYear()
-    );
+    createdDate.setHours(0, 0, 0, 0);
+    return createdDate.getTime() === today.getTime();
   };
 
   const handleUpdateClick = (transaction: Transaction) => {
