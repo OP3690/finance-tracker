@@ -143,7 +143,7 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
               return (
                 <tr 
                   key={transaction.id}
-                  className={isToday ? 'bg-orange-50' : ''}
+                  className={isToday ? 'bg-green-50' : ''}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatDate(new Date(transaction.date))}
