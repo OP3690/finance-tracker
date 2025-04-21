@@ -44,14 +44,14 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
   const isCreatedToday = (createdAt: string): boolean => {
     if (!createdAt) return false;
     
-    const today = new Date();
+    const now = new Date();
     const created = new Date(createdAt);
     
-    return (
-      created.getDate() === today.getDate() &&
-      created.getMonth() === today.getMonth() &&
-      created.getFullYear() === today.getFullYear()
-    );
+    // Compare only the date parts (year, month, day)
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const createdDate = new Date(created.getFullYear(), created.getMonth(), created.getDate());
+    
+    return today.getTime() === createdDate.getTime();
   };
 
   const handleUpdateClick = (transaction: Transaction) => {
@@ -157,19 +157,17 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
           </thead>
           <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
             {currentTransactions.map((transaction) => {
-              const wasCreatedToday = isCreatedToday(transaction.createdAt);
-
               return (
                 <tr 
                   key={transaction.id}
                   className={`${
-                    wasCreatedToday ? 'bg-[#e8fbe8] dark:bg-[#1a3d1a]' : ''
+                    isCreatedToday(transaction.createdAt) ? 'bg-[#e8fbe8] dark:bg-[#1a3d1a]' : ''
                   } hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                     <div className="flex items-center">
                       <span>{formatDate(new Date(transaction.date))}</span>
-                      {wasCreatedToday && (
+                      {isCreatedToday(transaction.createdAt) && (
                         <span className="ml-1 text-xs italic">
                           New
                         </span>
