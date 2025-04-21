@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { formatCurrency, formatDate } from '@/utils/helpers';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit2 } from 'lucide-react';
 import UpdateTransactionModal from './UpdateTransactionModal';
@@ -25,7 +25,17 @@ interface TransactionTableProps {
 export function TransactionTable({ transactions, onPageChange, currentPage, totalPages }: TransactionTableProps) {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   
+  // Update current time every minute to handle day changes
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, []);
+
   const itemsPerPage = 10;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -34,13 +44,14 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
   const isCreatedToday = (createdAt: string): boolean => {
     if (!createdAt) return false;
     
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
+    const today = currentTime;
     const created = new Date(createdAt);
-    created.setHours(0, 0, 0, 0);
     
-    return today.getTime() === created.getTime();
+    return (
+      created.getDate() === today.getDate() &&
+      created.getMonth() === today.getMonth() &&
+      created.getFullYear() === today.getFullYear()
+    );
   };
 
   const handleUpdateClick = (transaction: Transaction) => {
@@ -122,70 +133,67 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
   };
 
   return (
-    <div className="bg-white shadow-md rounded-lg overflow-hidden">
+    <div className="bg-white shadow-md rounded-lg overflow-hidden dark:bg-gray-800">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-900">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                 Date
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                 Category
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                 Description
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                 Amount
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
             {currentTransactions.map((transaction) => {
               const wasCreatedToday = isCreatedToday(transaction.createdAt);
-              console.log('Transaction:', {
-                id: transaction.id,
-                createdAt: transaction.createdAt,
-                wasCreatedToday
-              });
 
               return (
                 <tr 
                   key={transaction.id}
-                  className={`${wasCreatedToday ? 'bg-green-50' : ''} hover:bg-gray-50/80 transition-colors duration-150`}
+                  className={`${
+                    wasCreatedToday ? 'row-new bg-[#e8fbe8] dark:bg-[#1a3d1a]' : ''
+                  } hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150`}
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div className="flex items-center gap-2">
-                      {formatDate(new Date(transaction.date))}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                    <div className="flex items-center">
+                      <span>{formatDate(new Date(transaction.date))}</span>
                       {wasCreatedToday && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span className="flag-new ml-1 text-xs italic">
                           New
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                     {transaction.category}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                     {transaction.description}
                     {transaction.comment && (
-                      <span className="ml-2 text-gray-500">({transaction.comment})</span>
+                      <span className="ml-2 text-gray-500 dark:text-gray-400">({transaction.comment})</span>
                     )}
                   </td>
                   <td className={`px-6 py-4 whitespace-nowrap text-sm text-right ${
-                    transaction.category === 'Investment' ? 'text-green-800 font-semibold' : 'text-gray-900'
+                    transaction.category === 'Investment' ? 'text-green-800 dark:text-green-400 font-semibold' : 'text-gray-900 dark:text-gray-100'
                   }`}>
                     {formatCurrency(transaction.amount)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                     <button
                       onClick={() => handleUpdateClick(transaction)}
-                      className="text-blue-600 hover:text-blue-800 transition-colors duration-150"
+                      className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-150"
                     >
                       <Edit2 size={16} />
                     </button>
@@ -196,8 +204,8 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
           </tbody>
         </table>
       </div>
-      <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
-        <div className="text-sm text-gray-700">
+      <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
+        <div className="text-sm text-gray-700 dark:text-gray-300">
           Showing {startIndex + 1} to {Math.min(endIndex, transactions.length)} of{' '}
           {transactions.length} results
         </div>
@@ -209,7 +217,6 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
           onClose={() => setIsUpdateModalOpen(false)}
           onSuccess={() => {
             setIsUpdateModalOpen(false);
-            // Add any success handling here
           }}
         />
       )}
