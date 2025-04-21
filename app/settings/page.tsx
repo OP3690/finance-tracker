@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, Edit2, ChevronRight, Save, X, BarChart2, AlertTriangle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { motion } from 'framer-motion';
 
 interface Category {
   id: string;
@@ -323,16 +324,27 @@ export default function SettingsPage() {
           </div>
           <div className="divide-y divide-gray-200">
             {categories.map((category) => (
-              <div
+              <motion.div
                 key={category.id}
-                className={`px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors ${
+                initial={false}
+                whileTap={{ scale: 0.98 }}
+                className={`px-6 py-4 hover:bg-gray-50 transition-colors ${
                   selectedCategory?.id === category.id ? 'bg-blue-50' : ''
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <div 
-                    className="flex-1"
-                    onClick={() => setSelectedCategory(category)}
+                  <button 
+                    className="flex-1 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md"
+                    onClick={() => {
+                      if (selectedCategory?.id === category.id) {
+                        setSelectedCategory(null);
+                      } else {
+                        setSelectedCategory(category);
+                      }
+                      setShowAnalytics(false);
+                      setIsAddingDescription(false);
+                      setEditingDescription(null);
+                    }}
                   >
                     <div className="flex items-center">
                       <span className="text-sm font-medium text-gray-900">{category.name}</span>
@@ -340,20 +352,20 @@ export default function SettingsPage() {
                         ({category.descriptions.length} descriptions)
                       </span>
                     </div>
-                  </div>
+                  </button>
                   {!['Income', 'Investment'].includes(category.name) && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteCategoryClick(category);
                       }}
-                      className="ml-4 p-2 text-gray-400 hover:text-red-500 transition-colors"
+                      className="ml-4 p-2 text-gray-400 hover:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   )}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
           <div className="px-6 py-4 border-t border-gray-200">
@@ -366,7 +378,11 @@ export default function SettingsPage() {
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               />
               <button
-                onClick={() => addCategoryMutation.mutate(newCategory)}
+                onClick={() => {
+                  if (newCategory.trim()) {
+                    addCategoryMutation.mutate(newCategory);
+                  }
+                }}
                 disabled={!newCategory.trim()}
                 className="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
               >
@@ -377,7 +393,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Descriptions List */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900">
               {selectedCategory ? `${selectedCategory.name} Descriptions` : 'Select a Category'}
@@ -385,7 +401,7 @@ export default function SettingsPage() {
             {selectedCategory && (
               <button
                 onClick={() => setShowAnalytics(!showAnalytics)}
-                className="flex items-center text-sm text-blue-600 hover:text-blue-800"
+                className="flex items-center text-sm text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-2 py-1"
               >
                 <BarChart2 className="h-4 w-4 mr-1" />
                 {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
