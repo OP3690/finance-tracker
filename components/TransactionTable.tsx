@@ -34,12 +34,12 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const isCreatedToday = (createdAt: string) => {
-    const date = new Date(createdAt);
+  const isCreatedToday = (transaction: Transaction) => {
+    const createdDate = new Date(transaction.createdAt);
     return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
+      createdDate.getDate() === today.getDate() &&
+      createdDate.getMonth() === today.getMonth() &&
+      createdDate.getFullYear() === today.getFullYear()
     );
   };
 
@@ -146,12 +146,12 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {currentTransactions.map((transaction) => {
-              const wasCreatedToday = isCreatedToday(transaction.createdAt);
+              const wasCreatedToday = isCreatedToday(transaction);
 
               return (
                 <tr 
                   key={transaction.id}
-                  className={`${wasCreatedToday ? 'bg-green-50' : ''} hover:bg-gray-50`}
+                  className={`${wasCreatedToday ? 'bg-green-50' : ''} hover:bg-gray-50 transition-colors duration-150`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div className="flex items-center gap-2">
