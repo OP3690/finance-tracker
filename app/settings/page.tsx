@@ -29,6 +29,10 @@ export default function SettingsPage() {
     description: string;
     lastThreeMonthsCount: number;
   } | null>(null);
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState<{
+    category: Category;
+    transactionCount: number;
+  } | null>(null);
   const queryClient = useQueryClient();
 
   const { data: categories = [], isLoading } = useQuery<Category[]>({
@@ -232,6 +236,29 @@ export default function SettingsPage() {
     },
   });
 
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (categoryId: string) => {
+      const response = await fetch(`/api/categories`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: categoryId }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete category');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      setShowDeleteCategoryModal(null);
+      setSelectedCategory(null);
+      toast.success('Category deleted successfully');
+    },
+    onError: () => {
+      toast.error('Failed to delete category');
+    },
+  });
+
   const handleDeleteClick = (description: string) => {
     const usage = descriptionUsage.find(item => item.description === description);
     setShowDeleteModal({
@@ -243,6 +270,20 @@ export default function SettingsPage() {
   const handleConfirmDelete = () => {
     if (showDeleteModal) {
       deleteDescriptionMutation.mutate(showDeleteModal.description);
+    }
+  };
+
+  const handleDeleteCategoryClick = (category: Category) => {
+    const categoryTransactions = transactions.filter(t => t.category === category.name);
+    setShowDeleteCategoryModal({
+      category,
+      transactionCount: categoryTransactions.length
+    });
+  };
+
+  const handleConfirmCategoryDelete = () => {
+    if (showDeleteCategoryModal) {
+      deleteCategoryMutation.mutate(showDeleteCategoryModal.category.id);
     }
   };
 
@@ -266,15 +307,17 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Category Settings</h1>
-        <p className="mt-2 text-gray-600">Manage your transaction categories and descriptions</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+          <p className="mt-2 text-gray-600">Manage your categories and descriptions</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Categories List */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Categories</h2>
           </div>
@@ -282,19 +325,33 @@ export default function SettingsPage() {
             {categories.map((category) => (
               <div
                 key={category.id}
-                className={`px-6 py-4 cursor-pointer hover:bg-gray-50 ${
+                className={`px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors ${
                   selectedCategory?.id === category.id ? 'bg-blue-50' : ''
                 }`}
-                onClick={() => setSelectedCategory(category)}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className="text-sm font-medium text-gray-900">{category.name}</span>
-                    <span className="ml-2 text-xs text-gray-500">
-                      ({category.descriptions.length})
-                    </span>
+                  <div 
+                    className="flex-1"
+                    onClick={() => setSelectedCategory(category)}
+                  >
+                    <div className="flex items-center">
+                      <span className="text-sm font-medium text-gray-900">{category.name}</span>
+                      <span className="ml-2 text-xs text-gray-500">
+                        ({category.descriptions.length} descriptions)
+                      </span>
+                    </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                  {!['Income', 'Investment'].includes(category.name) && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteCategoryClick(category);
+                      }}
+                      className="ml-4 p-2 text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -306,12 +363,12 @@ export default function SettingsPage() {
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
                 placeholder="Add new category"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               />
               <button
                 onClick={() => addCategoryMutation.mutate(newCategory)}
                 disabled={!newCategory.trim()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                className="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
               >
                 <Plus className="h-5 w-5" />
               </button>
@@ -464,6 +521,41 @@ export default function SettingsPage() {
           )}
         </div>
       </div>
+
+      {/* Delete Category Confirmation Modal */}
+      {showDeleteCategoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center mb-4">
+              <AlertTriangle className="h-6 w-6 text-red-500 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Delete Category</h3>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to delete the category "{showDeleteCategoryModal.category.name}"?
+              {showDeleteCategoryModal.transactionCount > 0 && (
+                <span className="block mt-2 text-red-600">
+                  Warning: This category is used in {showDeleteCategoryModal.transactionCount} transaction(s).
+                  Deleting it may affect your transaction history.
+                </span>
+              )}
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowDeleteCategoryModal(null)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmCategoryDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors"
+              >
+                Delete Category
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
