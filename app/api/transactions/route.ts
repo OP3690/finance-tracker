@@ -4,30 +4,33 @@ import { format, startOfMonth, endOfMonth } from 'date-fns';
 
 export async function GET(request: Request) {
   try {
-    console.log('Fetching transactions...');
     const { searchParams } = new URL(request.url);
     const month = searchParams.get('month');
-    
-    let where = {};
+
+    console.log('Fetching transactions...');
+    console.log('Database URL:', process.env.DATABASE_URL);
+
+    let whereClause = {};
     if (month) {
-      const date = new Date(month);
-      where = {
+      const [year, monthNum] = month.split('-');
+      const startDate = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
+      const endDate = new Date(parseInt(year), parseInt(monthNum), 0);
+
+      whereClause = {
         date: {
-          gte: startOfMonth(date),
-          lte: endOfMonth(date),
+          gte: startDate,
+          lte: endDate,
         },
       };
     }
 
-    console.log('Database URL:', process.env.DATABASE_URL);
-    console.log('Query where clause:', where);
+    console.log('Query where clause:', whereClause);
 
     const transactions = await prisma.transaction.findMany({
-      where,
-      orderBy: [
-        { date: 'desc' },
-        { createdAt: 'desc' }
-      ],
+      where: whereClause,
+      orderBy: {
+        date: 'desc',
+      },
       select: {
         id: true,
         date: true,
@@ -39,10 +42,10 @@ export async function GET(request: Request) {
       },
     });
 
-    console.log('Fetched transactions:', transactions);
     return NextResponse.json(transactions);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to fetch transactions:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace available');
     return NextResponse.json(
       { error: 'Failed to fetch transactions' },
       { status: 500 }
@@ -53,25 +56,17 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    console.log('Creating new transaction:', data);
+    console.log('Creating new transaction...');
+    console.log('Request data:', data);
+    console.log('Database URL:', process.env.DATABASE_URL);
 
-    // Validate required fields
-    if (!data.date || !data.category || !data.description || data.amount === undefined) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
-    const now = new Date();
     const transaction = await prisma.transaction.create({
       data: {
         date: new Date(data.date),
         category: data.category,
         description: data.description,
-        amount: Number(data.amount),
-        comment: data.comment || undefined,
-        createdAt: now,
+        amount: data.amount,
+        comment: data.comment,
       },
       select: {
         id: true,
@@ -84,27 +79,10 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log('Created transaction:', transaction);
     return NextResponse.json(transaction);
-  } catch (error: any) {
-    console.error('Failed to create transaction:', error);
-    
-    // Handle specific database errors
-    if (error.code === 'P1001' || error.code === 'P1017') {
-      return NextResponse.json(
-        { error: 'Database connection error. Please try again later.' },
-        { status: 503 }
-      );
-    }
-
-    // Handle authentication errors
-    if (error.code === 'P1012') {
-      return NextResponse.json(
-        { error: 'Database authentication failed. Please check your credentials.' },
-        { status: 401 }
-      );
-    }
-
+  } catch (error: unknown) {
+    console.error('Failed to create transaction. Error:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace available');
     return NextResponse.json(
       { error: 'Failed to create transaction' },
       { status: 500 }
