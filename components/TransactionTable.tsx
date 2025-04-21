@@ -12,6 +12,7 @@ interface Transaction {
   description: string;
   amount: number;
   comment?: string;
+  createdAt: string;
 }
 
 interface TransactionTableProps {
@@ -32,6 +33,15 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  const isCreatedToday = (createdAt: string) => {
+    const date = new Date(createdAt);
+    return (
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+    );
+  };
 
   const handleUpdateClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
@@ -136,20 +146,18 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {currentTransactions.map((transaction) => {
-              const transactionDate = new Date(transaction.date);
-              transactionDate.setHours(0, 0, 0, 0);
-              const isToday = transactionDate.getTime() === today.getTime();
+              const wasCreatedToday = isCreatedToday(transaction.createdAt);
 
               return (
                 <tr 
                   key={transaction.id}
-                  className={`${isToday ? 'bg-green-50' : ''} hover:bg-gray-50`}
+                  className={`${wasCreatedToday ? 'bg-green-50' : ''} hover:bg-gray-50`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div className="flex items-center gap-2">
                       {formatDate(new Date(transaction.date))}
-                      {isToday && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                      {wasCreatedToday && (
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
                           New
                         </span>
                       )}
