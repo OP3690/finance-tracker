@@ -45,17 +45,44 @@ export async function POST(request: Request) {
     const data = await request.json();
     console.log('Creating new transaction...', { data });
 
+    // Validate required fields
+    if (!data.date || !data.category || !data.description || data.amount === undefined) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
     const transaction = await prisma.transaction.create({
       data: {
-        ...data,
-        createdAt: new Date().toISOString(),
+        date: new Date(data.date),
+        category: data.category,
+        description: data.description,
+        amount: Number(data.amount),
+        comment: data.comment || undefined,
       },
     });
 
     return NextResponse.json(transaction);
-  } catch (error) {
-    console.error('Failed to create transaction. Error:', error);
-    console.error('Error stack:', error.stack);
+  } catch (error: any) {
+    console.error('Failed to create transaction.', error);
+    
+    // Handle specific database errors
+    if (error.code === 'P1001' || error.code === 'P1017') {
+      return NextResponse.json(
+        { error: 'Database connection error. Please try again later.' },
+        { status: 503 }
+      );
+    }
+
+    // Handle authentication errors
+    if (error.code === 'P1012') {
+      return NextResponse.json(
+        { error: 'Database authentication failed. Please check your credentials.' },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json(
       { error: 'Failed to create transaction' },
       { status: 500 }
