@@ -12,6 +12,7 @@ interface Transaction {
   description: string;
   amount: number;
   comment?: string;
+  createdAt: string;
 }
 
 interface TransactionTableProps {
@@ -30,13 +31,14 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
   const endIndex = startIndex + itemsPerPage;
   const currentTransactions = transactions.slice(startIndex, endIndex);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const isToday = (date: string) => {
-    const transactionDate = new Date(date);
-    transactionDate.setHours(0, 0, 0, 0);
-    return transactionDate.getTime() === today.getTime();
+  const isAddedToday = (createdAt: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const creationDate = new Date(createdAt);
+    creationDate.setHours(0, 0, 0, 0);
+    
+    return creationDate.getTime() === today.getTime();
   };
 
   const handleUpdateClick = (transaction: Transaction) => {
@@ -145,12 +147,12 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
               return (
                 <tr 
                   key={transaction.id}
-                  className={isToday(transaction.date) ? 'bg-green-50' : ''}
+                  className={isAddedToday(transaction.createdAt) ? 'bg-green-50' : ''}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatDate(new Date(transaction.date))}
-                    {isToday(transaction.date) && (
-                      <span className="ml-2 text-xs text-green-600 font-medium">New</span>
+                    {isAddedToday(transaction.createdAt) && (
+                      <span className="ml-2 text-xs text-green-600 font-medium bg-green-100 px-2 py-0.5 rounded-full">New</span>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

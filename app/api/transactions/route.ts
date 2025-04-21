@@ -42,28 +42,22 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    console.log('Creating new transaction...');
     const data = await request.json();
-    console.log('Request data:', data);
-    console.log('Database URL:', process.env.DATABASE_URL);
+    console.log('Creating new transaction...', { data });
 
     const transaction = await prisma.transaction.create({
       data: {
-        date: new Date(data.date),
-        category: data.category,
-        description: data.description,
-        amount: parseFloat(data.amount),
-        comment: data.comment || '',
+        ...data,
+        createdAt: new Date().toISOString(),
       },
     });
 
-    console.log('Created transaction:', transaction);
     return NextResponse.json(transaction);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to create transaction. Error:', error);
-    console.error('Error stack:', error?.stack);
+    console.error('Error stack:', error.stack);
     return NextResponse.json(
-      { error: 'Failed to create transaction', details: error?.message || String(error) },
+      { error: 'Failed to create transaction' },
       { status: 500 }
     );
   }
