@@ -12,7 +12,6 @@ interface Transaction {
   description: string;
   amount: number;
   comment?: string;
-  createdAt: string;
 }
 
 interface TransactionTableProps {
@@ -31,15 +30,8 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
   const endIndex = startIndex + itemsPerPage;
   const currentTransactions = transactions.slice(startIndex, endIndex);
 
-  const isAddedToday = (createdAt: string) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const creationDate = new Date(createdAt);
-    creationDate.setHours(0, 0, 0, 0);
-    
-    return creationDate.getTime() === today.getTime();
-  };
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   const handleUpdateClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
@@ -144,16 +136,24 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {currentTransactions.map((transaction) => {
+              const transactionDate = new Date(transaction.date);
+              transactionDate.setHours(0, 0, 0, 0);
+              const isToday = transactionDate.getTime() === today.getTime();
+
               return (
                 <tr 
                   key={transaction.id}
-                  className={isAddedToday(transaction.createdAt) ? 'bg-green-50' : ''}
+                  className={`${isToday ? 'bg-green-50' : ''} hover:bg-gray-50`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatDate(new Date(transaction.date))}
-                    {isAddedToday(transaction.createdAt) && (
-                      <span className="ml-2 text-xs text-green-600 font-medium bg-green-100 px-2 py-0.5 rounded-full">New</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {formatDate(new Date(transaction.date))}
+                      {isToday && (
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                          New
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {transaction.category}
