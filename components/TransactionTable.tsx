@@ -44,7 +44,7 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
   const isCreatedToday = (createdAt: string): boolean => {
     if (!createdAt) return false;
     
-    const today = currentTime;
+    const today = new Date();
     const created = new Date(createdAt);
     
     return (
@@ -60,7 +60,7 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
   };
 
   const renderPaginationButtons = () => {
-    const buttons = [];
+    const buttons: React.ReactElement[] = [];
     const maxVisibleButtons = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisibleButtons / 2));
     let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
@@ -163,14 +163,14 @@ export function TransactionTable({ transactions, onPageChange, currentPage, tota
                 <tr 
                   key={transaction.id}
                   className={`${
-                    wasCreatedToday ? 'row-new bg-[#e8fbe8] dark:bg-[#1a3d1a]' : ''
+                    wasCreatedToday ? 'bg-[#e8fbe8] dark:bg-[#1a3d1a]' : ''
                   } hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                     <div className="flex items-center">
                       <span>{formatDate(new Date(transaction.date))}</span>
                       {wasCreatedToday && (
-                        <span className="flag-new ml-1 text-xs italic">
+                        <span className="ml-1 text-xs italic">
                           New
                         </span>
                       )}
