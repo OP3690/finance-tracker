@@ -242,7 +242,7 @@ export default function Dashboard() {
 
       {/* Summary Table */}
       <div className="card overflow-hidden">
-        <h2 className="text-xl font-bold text-primary p-4 bg-card/50">Monthly Summary</h2>
+        <h2 className="text-xl font-bold text-white p-4 bg-blue-500 bg-opacity-90">Monthly Summary</h2>
         <div className="table-container">
           <table className="min-w-full divide-y divide-border/20">
             <thead className="table-header">
