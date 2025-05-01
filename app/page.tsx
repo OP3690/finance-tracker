@@ -172,7 +172,7 @@ export default function Dashboard() {
              transactionDate.getMonth() === now.getMonth() &&
              transactionDate.getFullYear() === now.getFullYear();
     })
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + t.amount, 0) + getOpeningBalance();
 
   const totalExpenses = (Array.isArray(transactions) ? transactions : [])
     .filter((t) => {
@@ -191,7 +191,7 @@ export default function Dashboard() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card gradient-border p-6">
-          <h3 className="text-lg font-semibold text-foreground/80 mb-2">Total Income</h3>
+          <h3 className="text-lg font-semibold text-foreground/80 mb-2">Total Income (Inc. Opening Balance)</h3>
           <p className="text-3xl font-bold glow-text">{formatCurrency(totalIncome)}</p>
         </div>
         <div className="card gradient-border p-6">
