@@ -76,17 +76,39 @@ export function DetailedSummary() {
 
     if (!category || !description) return;
 
+    // Find the period index for this transaction
     let periodIndex = periods.findIndex(p => p.match(date));
     if (periodIndex < 0) return;
 
+    // If this is a today's transaction, also add it to current month's total
+    const today = new Date();
+    const isToday = date.getDate() === today.getDate() &&
+                    date.getMonth() === today.getMonth() &&
+                    date.getFullYear() === today.getFullYear();
+    
     if (!groupedData[category]) {
       groupedData[category] = {};
     }
     if (!groupedData[category][description]) {
       groupedData[category][description] = new Array(5).fill(0);
     }
+
+    // Add to the specific period
     groupedData[category][description][periodIndex] += amount;
 
+    // If it's today's transaction, also add to current month (index 1)
+    if (isToday && periodIndex === 0) {
+      groupedData[category][description][1] += amount;
+      
+      // Update totals for current month as well
+      if (category.toLowerCase() === 'income') {
+        totalIncome[1] += amount;
+      } else {
+        totalExpenses[1] += amount;
+      }
+    }
+
+    // Update regular totals
     if (category.toLowerCase() === 'income') {
       totalIncome[periodIndex] += amount;
     } else {
