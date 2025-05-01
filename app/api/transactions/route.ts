@@ -5,26 +5,32 @@ import { format, startOfMonth, endOfMonth } from 'date-fns';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const month = searchParams.get('month');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
 
     console.log('Fetching transactions...');
+    console.log('Start Date:', startDate);
+    console.log('End Date:', endDate);
     console.log('Database URL:', process.env.DATABASE_URL);
 
-    let whereClause = {};
-    if (month) {
-      const [year, monthNum] = month.split('-');
-      const startDate = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
-      const endDate = new Date(parseInt(year), parseInt(monthNum), 0);
+    // First, let's check if we can connect to the database
+    const allTransactions = await prisma.transaction.findMany();
+    console.log('Total transactions in database:', allTransactions.length);
+    console.log('Sample transaction:', allTransactions[0]);
 
-      whereClause = {
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
-      };
+    let whereClause: any = {};
+    
+    if (startDate || endDate) {
+      whereClause.date = {};
+      if (startDate) {
+        whereClause.date.gte = new Date(startDate);
+      }
+      if (endDate) {
+        whereClause.date.lte = new Date(endDate);
+      }
     }
 
-    console.log('Query where clause:', whereClause);
+    console.log('Query where clause:', JSON.stringify(whereClause, null, 2));
 
     const transactions = await prisma.transaction.findMany({
       where: whereClause,
@@ -42,10 +48,15 @@ export async function GET(request: Request) {
       },
     });
 
+    console.log('Found transactions:', JSON.stringify(transactions, null, 2));
     return NextResponse.json(transactions);
   } catch (error: unknown) {
     console.error('Failed to fetch transactions:', error);
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace available');
+    console.error('Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    });
     return NextResponse.json(
       { error: 'Failed to fetch transactions' },
       { status: 500 }

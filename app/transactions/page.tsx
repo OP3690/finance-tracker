@@ -57,44 +57,80 @@ export default function TransactionsPage() {
     },
   });
 
-  const { data: transactions = [], isLoading } = useQuery<Transaction[]>({
-    queryKey: ['transactions'],
+  const { data: transactions = [], isLoading, error } = useQuery<Transaction[]>({
+    queryKey: ['transactions', filters.startDate, filters.endDate],
     queryFn: async () => {
-      const response = await fetch('/api/transactions');
+      console.log('Fetching transactions with filters:', filters);
+      const params = new URLSearchParams();
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      
+      const url = `/api/transactions${params.toString() ? `?${params.toString()}` : ''}`;
+      console.log('Fetching from URL:', url);
+      
+      const response = await fetch(url);
       if (!response.ok) {
-        throw new Error('Failed to fetch transactions');
+        const errorText = await response.text();
+        console.error('Failed to fetch transactions:', errorText);
+        throw new Error(`Failed to fetch transactions: ${errorText}`);
       }
       const data = await response.json();
+      console.log('Received transactions:', data);
       return Array.isArray(data) ? data : [];
     },
   });
 
-  // Set default date range to current month
-  React.useEffect(() => {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
-    setFilters(prev => ({
-      ...prev,
-      startDate: startOfMonth.toISOString().split('T')[0],
-      endDate: endOfMonth.toISOString().split('T')[0],
-    }));
-  }, []);
+  // Log any query errors
+  if (error) {
+    console.error('Transaction query error:', error);
+  }
 
   const filteredTransactions = (Array.isArray(transactions) ? transactions : [])
     .filter((transaction) => {
-      if (filters.category && transaction.category !== filters.category) return false;
-      if (filters.startDate && new Date(transaction.date) < new Date(filters.startDate)) return false;
-      if (filters.endDate && new Date(transaction.date) > new Date(filters.endDate)) return false;
-      if (filters.minAmount && transaction.amount < parseFloat(filters.minAmount)) return false;
-      if (filters.maxAmount && transaction.amount > parseFloat(filters.maxAmount)) return false;
+      console.log('Filtering transaction:', transaction);
+      
+      if (filters.category && transaction.category !== filters.category) {
+        console.log('Filtered out by category');
+        return false;
+      }
+      
+      const transactionDate = new Date(transaction.date);
+      if (filters.startDate) {
+        const startDate = new Date(filters.startDate);
+        if (transactionDate < startDate) {
+          console.log('Filtered out by start date');
+          return false;
+        }
+      }
+      
+      if (filters.endDate) {
+        const endDate = new Date(filters.endDate);
+        if (transactionDate > endDate) {
+          console.log('Filtered out by end date');
+          return false;
+        }
+      }
+      
+      if (filters.minAmount && transaction.amount < parseFloat(filters.minAmount)) {
+        console.log('Filtered out by min amount');
+        return false;
+      }
+      
+      if (filters.maxAmount && transaction.amount > parseFloat(filters.maxAmount)) {
+        console.log('Filtered out by max amount');
+        return false;
+      }
+      
       if (
         filters.searchTerm &&
         !transaction.description.toLowerCase().includes(filters.searchTerm.toLowerCase()) &&
         !transaction.category.toLowerCase().includes(filters.searchTerm.toLowerCase())
-      )
+      ) {
+        console.log('Filtered out by search term');
         return false;
+      }
+      
+      console.log('Transaction passed all filters');
       return true;
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -112,14 +148,10 @@ export default function TransactionsPage() {
   };
 
   const clearAllFilters = () => {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
     setFilters({
       category: '',
-      startDate: startOfMonth.toISOString().split('T')[0],
-      endDate: endOfMonth.toISOString().split('T')[0],
+      startDate: '',
+      endDate: '',
       minAmount: '',
       maxAmount: '',
       searchTerm: '',
@@ -129,14 +161,10 @@ export default function TransactionsPage() {
 
   const removeFilter = (filterName: keyof FilterState) => {
     if (filterName === 'startDate' || filterName === 'endDate') {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      
       setFilters(prev => ({
         ...prev,
-        startDate: filterName === 'startDate' ? startOfMonth.toISOString().split('T')[0] : prev.startDate,
-        endDate: filterName === 'endDate' ? endOfMonth.toISOString().split('T')[0] : prev.endDate,
+        startDate: filterName === 'startDate' ? '' : prev.startDate,
+        endDate: filterName === 'endDate' ? '' : prev.endDate,
       }));
     } else {
       setFilters(prev => ({ ...prev, [filterName]: '' }));
@@ -172,10 +200,7 @@ export default function TransactionsPage() {
 
   const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
     if (key === 'startDate' || key === 'endDate') {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      return value !== (key === 'startDate' ? startOfMonth.toISOString().split('T')[0] : endOfMonth.toISOString().split('T')[0]);
+      return value !== '';
     }
     return value !== '';
   });
@@ -330,7 +355,7 @@ export default function TransactionsPage() {
                   </button>
                 </div>
               )}
-              {filters.startDate && new Date(filters.startDate).getTime() !== new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime() && (
+              {filters.startDate && (
                 <div className="inline-flex items-center bg-gray-100 rounded-full px-3 py-1 text-sm">
                   From: {new Date(filters.startDate).toLocaleDateString()}
                   <button
@@ -341,7 +366,7 @@ export default function TransactionsPage() {
                   </button>
                 </div>
               )}
-              {filters.endDate && new Date(filters.endDate).getTime() !== new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getTime() && (
+              {filters.endDate && (
                 <div className="inline-flex items-center bg-gray-100 rounded-full px-3 py-1 text-sm">
                   To: {new Date(filters.endDate).toLocaleDateString()}
                   <button

@@ -33,23 +33,45 @@ export default function Dashboard() {
   const { data: transactions = [], isLoading } = useQuery<Transaction[]>({
     queryKey: ['transactions'],
     queryFn: async () => {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      const response = await fetch(`${baseUrl}/api/transactions`);
+      console.log('Fetching transactions for dashboard...');
+      const response = await fetch('/api/transactions');
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to fetch transactions:', errorText);
         throw new Error('Failed to fetch transactions');
       }
       const data = await response.json();
+      console.log('Received transactions:', data);
       return Array.isArray(data) ? data : [];
     },
   });
 
   const getMonthlyTotal = (month: Date, category?: string) => {
+    console.log('Getting monthly total for:', {
+      month: format(month, 'yyyy-MM'),
+      category,
+      transactions: transactions.length
+    });
+    
     return (Array.isArray(transactions) ? transactions : [])
       .filter(t => {
         const transactionDate = new Date(t.date);
-        return transactionDate.getMonth() === month.getMonth() &&
-               transactionDate.getFullYear() === month.getFullYear() &&
-               (!category || t.category === category);
+        const isMatchingMonth = transactionDate.getFullYear() === month.getFullYear() &&
+                              transactionDate.getMonth() === month.getMonth();
+        const isMatchingCategory = !category || t.category === category;
+        
+        console.log('Filtering transaction:', {
+          id: t.id,
+          date: format(transactionDate, 'yyyy-MM-dd'),
+          transactionMonth: format(transactionDate, 'yyyy-MM'),
+          targetMonth: format(month, 'yyyy-MM'),
+          category: t.category,
+          amount: t.amount,
+          isMatchingMonth,
+          isMatchingCategory
+        });
+        
+        return isMatchingMonth && isMatchingCategory;
       })
       .reduce((sum, t) => sum + t.amount, 0);
   };
@@ -86,9 +108,35 @@ export default function Dashboard() {
   };
 
   const getOpeningBalance = () => {
-    const previousMonth = subMonths(currentMonth, 1);
-    const previousMonthIncome = getMonthlyTotal(previousMonth, 'Income');
-    const previousMonthExpenses = getMonthlyTotal(previousMonth) - previousMonthIncome;
+    // Get the last day of previous month
+    const today = new Date();
+    const firstDayOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfPreviousMonth = new Date(firstDayOfCurrentMonth);
+    lastDayOfPreviousMonth.setDate(0); // This will set to the last day of previous month
+
+    // Calculate all income and expenses up to the last day of previous month
+    const previousMonthTransactions = (Array.isArray(transactions) ? transactions : [])
+      .filter((t) => {
+        const transactionDate = new Date(t.date);
+        return transactionDate.getMonth() === lastDayOfPreviousMonth.getMonth() &&
+               transactionDate.getFullYear() === lastDayOfPreviousMonth.getFullYear();
+      });
+
+    const previousMonthIncome = previousMonthTransactions
+      .filter(t => t.category === 'Income')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const previousMonthExpenses = previousMonthTransactions
+      .filter(t => t.category !== 'Income')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    console.log('Opening Balance Calculation:', {
+      lastDayOfPreviousMonth: format(lastDayOfPreviousMonth, 'yyyy-MM-dd'),
+      previousMonthIncome,
+      previousMonthExpenses,
+      openingBalance: previousMonthIncome - previousMonthExpenses
+    });
+
     return previousMonthIncome - previousMonthExpenses;
   };
 
@@ -117,11 +165,23 @@ export default function Dashboard() {
   }
 
   const totalIncome = (Array.isArray(transactions) ? transactions : [])
-    .filter((t) => t.category === 'Income')
+    .filter((t) => {
+      const transactionDate = new Date(t.date);
+      const now = new Date();
+      return t.category === 'Income' && 
+             transactionDate.getMonth() === now.getMonth() &&
+             transactionDate.getFullYear() === now.getFullYear();
+    })
     .reduce((sum, t) => sum + t.amount, 0);
 
   const totalExpenses = (Array.isArray(transactions) ? transactions : [])
-    .filter((t) => t.category !== 'Income')
+    .filter((t) => {
+      const transactionDate = new Date(t.date);
+      const now = new Date();
+      return t.category !== 'Income' && 
+             transactionDate.getMonth() === now.getMonth() &&
+             transactionDate.getFullYear() === now.getFullYear();
+    })
     .reduce((sum, t) => sum + t.amount, 0);
 
   const balance = totalIncome - totalExpenses;
@@ -278,15 +338,29 @@ export default function Dashboard() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="card p-6">
-          <h2 className="text-xl font-semibold mb-4 text-foreground">Spending by Category</h2>
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Spending by Category (Current Month)</h2>
           <div className="h-[300px]">
-            <CategoryPieChart transactions={transactions} />
+            <CategoryPieChart 
+              transactions={transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                const now = new Date();
+                return transactionDate.getMonth() === now.getMonth() &&
+                       transactionDate.getFullYear() === now.getFullYear();
+              })} 
+            />
           </div>
         </div>
         <div className="card p-6">
-          <h2 className="text-xl font-semibold mb-4 text-foreground">Daily Spending Trend</h2>
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Daily Spending Trend (Current Month)</h2>
           <div className="h-[300px]">
-            <DailySpendChart transactions={transactions} />
+            <DailySpendChart 
+              transactions={transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                const now = new Date();
+                return transactionDate.getMonth() === now.getMonth() &&
+                       transactionDate.getFullYear() === now.getFullYear();
+              })} 
+            />
           </div>
         </div>
       </div>
